@@ -1,0 +1,408 @@
+MonFiscalFacile
+
+application en Nextjs
+
+“Moins d’impôts. Sans devenir expert.”
+
+Cible :
+👉 indépendants / freelances / micro-entrepreneurs
+👉 non-tech
+👉 peur du fiscal, mais veulent payer moins légalement
+
+🧱 Architecture du produit (simple)
+
+Le SaaS repose sur 3 piliers :
+
+📥 Collecter les infos essentielles
+
+🧮 Simuler l’impôt
+
+💡 Suggérer des actions concrètes
+
+🖥️ ÉCRAN 1 — Onboarding ultra simple (3 minutes)
+Questions posées (maximum 6)
+
+Pays
+
+Statut (auto-entrepreneur, freelance, etc.)
+
+Activité (service / vente)
+
+Chiffre d’affaires mensuel estimé
+
+Dépenses pro actuelles (approximatif)
+
+TVA : oui / non
+
+👉 Pas besoin de documents, pas de jargon.
+
+🎯 Exemple utilisateur
+
+Jean
+
+Pays : France
+
+Statut : auto-entrepreneur
+
+Activité : graphiste
+
+CA : 3 000 €/mois
+
+Dépenses pro : ~400 €/mois
+
+TVA : non
+
+🖥️ ÉCRAN 2 — Dashboard clair (pas comptable)
+En haut (gros chiffres)
+
+💰 CA annuel estimé : 36 000 €
+
+🧾 Impôts + charges estimés : 9 500 €
+
+🟥 “Optimisation non activée”
+
+Bouton principal :
+🟢 Voir comment payer moins
+
+🧠 ÉCRAN 3 — Analyse intelligente (cœur du produit)
+
+Le SaaS compare :
+
+situation actuelle
+
+règles fiscales du pays
+
+seuils, plafonds, régimes alternatifs
+
+💡 Exemple de détection automatique
+🔍 Diagnostic
+
+“Tu utilises seulement 35 % des déductions possibles.”
+
+🟡 Alerte 1
+
+“Tes dépenses professionnelles sont sous-déclarées.”
+
+👉 Suggestion :
+
+Internet
+
+Téléphone
+
+Matériel
+
+Abonnement logiciels
+
+Coworking
+
+💬 “Beaucoup d’indépendants oublient ces postes.”
+
+🟡 Alerte 2
+
+“Tu approches du seuil où le régime réel devient plus avantageux.”
+
+Simulation affichée :
+
+Régime actuel : 9 500 € d’impôts
+
+Régime alternatif : 7 800 €
+
+👉 💸 Économie potentielle : 1 700 € / an
+
+🖥️ ÉCRAN 4 — Actions concrètes (pas de blabla)
+
+Chaque suggestion = action simple
+
+✅ Action 1 — “Ajouter des dépenses”
+
+Bouton :
+➕ Ajouter une dépense
+
+Type : abonnement logiciel
+
+Montant : 50 €/mois
+
+👉 Effet en temps réel :
+
+Nouvel impôt estimé : 9 050 €
+
+✅ Action 2 — “Changer de régime fiscal”
+
+Bouton :
+🧭 Simuler changement de régime
+
+Le SaaS explique en langage humain :
+
+“Dans ton cas, changer de régime te permettrait de déduire plus de frais.”
+
+Checklist :
+
+Avantage ✔
+
+Inconvénients ⚠
+
+Complexité 🟡
+
+✅ Action 3 — “Planifier une optimisation”
+
+“Si tu fais ces 3 actions avant décembre, tu économises environ 1 500 €.”
+
+Bouton :
+📅 Me rappeler
+
+🖥️ ÉCRAN 5 — Vue “Avant / Après” (très vendeur)
+Situation	Impôts
+Actuelle	9 500 €
+Optimisée	7 800 €
+💸 Gain	1 700 €
+
+👉 Psychologiquement ultra puissant
+
+🔐 Important : cadre légal
+
+Le SaaS affiche clairement :
+
+“Ces suggestions sont légales, basées sur la réglementation en vigueur.
+Ce n’est pas un conseil fiscal personnalisé d’expert.”
+
+➡️ Ça protège juridiquement.
+
+💸 MONÉTISATION (logique)
+Freemium
+
+Gratuit :
+
+Diagnostic
+
+Estimation impôts
+
+Payant (9–15 €/mois) :
+
+Optimisation
+
+Simulations
+
+Alertes
+
+Historique
+
+👉 Beaucoup paieront juste pour voir le gain potentiel
+
+📊 Exemple de ROI pour l’utilisateur
+
+Abonnement : 12 €/mois = 144 €/an
+
+Économie fiscale : 1 700 €
+
+👉 ROI x11
+👉 Vente ultra facile
+
+🚀 Pourquoi ce SaaS est très intelligent
+
+Tu ne fais pas de compta
+
+Tu ne remplaces pas un expert
+
+Tu fais un outil de décision
+
+Tu parles langage humain
+
+Tu attaques un problème émotionnel (peur des impôts)
+
+🧠 Bonus : synergie avec ton idée de facturation
+
+👉 Les données de facturation = données fiscales
+👉 Tu peux :
+
+proposer OptiSimple en add-on
+
+ou fusionner les deux plus tard
+
+🔜 Prochaine étape possible
+
+Je peux :
+
+Te dessiner les écrans exacts (UX flow)
+
+T’aider à définir les règles fiscales MVP (1 pays)
+
+Proposer un algorithme simple d’optimisation
+
+Te dire quoi NE PAS faire pour éviter les problèmes légaux
+
+👉 Tu veux qu’on avance sur quoi en priorité ?
+
+desines moi les ecrans ux ultra qualitatif 
+Opti Simple – Ux Screens
+OptiSimple – UX ultra qualitatif (wireframes décrits)
+🖥️ ÉCRAN 1 — Landing page (conversion maximale)
+Header
+
+Logo : OptiSimple
+
+Bouton secondaire : Se connecter
+
+Bouton principal (vert) : Tester gratuitement
+
+Hero (plein écran)
+
+Titre XXL : Payez moins d’impôts. Simplement.
+
+Sous‑titre : Un diagnostic fiscal clair en 3 minutes, sans jargon, sans comptable.
+
+Bouton primaire : Voir combien je peux économiser
+
+Micro‑texte rassurant : 100 % légal – sans engagement
+
+Section “Comment ça marche” (3 cartes)
+
+🧠 Répondez à 6 questions simples
+
+📊 Voyez votre impôt réel
+
+💡 Découvrez comment l’optimiser
+
+Preuve sociale
+
+“Déjà utilisé par 842 indépendants”
+
+3 témoignages courts
+
+🖥️ ÉCRAN 2 — Onboarding (wizard fluide)
+Structure
+
+Barre de progression (Étape 1/4)
+
+Carte centrale (mobile‑first)
+
+Étape 1 : Votre situation
+
+Sélecteur pays
+
+Sélecteur statut
+
+Bouton : Continuer
+
+Étape 2 : Activité
+
+Boutons larges : Service / Vente / Mixte
+
+Icônes explicites
+
+Étape 3 : Revenus & dépenses (sliders)
+
+Slider CA mensuel
+
+Slider dépenses mensuelles
+
+Texte dynamique : “≈ 36 000 € / an”
+
+Étape 4 : TVA
+
+Toggle Oui / Non
+
+Info‑bulle pédagogique
+
+CTA final : Voir mon diagnostic
+
+🖥️ ÉCRAN 3 — Dashboard principal
+Header
+
+Message humain : Voici votre situation fiscale actuelle 👇
+
+Cards KPI (grandes, aérées)
+
+CA annuel estimé
+
+Impôts & charges estimés
+
+État optimisation : 🔴 Non optimisé
+
+CTA central (sticky)
+
+🟢 Découvrir comment payer moins
+
+🖥️ ÉCRAN 4 — Analyse & alertes intelligentes
+Section “Diagnostic”
+
+Jauge circulaire : Optimisation actuelle : 35 %
+
+Cartes alertes (code couleur)
+🟡 Carte 1 — Dépenses sous‑utilisées
+
+Titre clair
+
+Liste de dépenses oubliées
+
+Bouton : Ajouter une dépense
+
+🟡 Carte 2 — Régime fiscal non optimal
+
+Texte simple
+
+Simulation instantanée
+
+Badge : Économie potentielle
+
+🖥️ ÉCRAN 5 — Simulation Avant / Après
+Comparatif visuel
+
+Colonne gauche : Situation actuelle
+
+Colonne droite : Situation optimisée
+
+Chiffre clé au centre
+
+💸 +1 700 € économisés / an
+
+Bouton : Activer l’optimisation
+
+🖥️ ÉCRAN 6 — Actions guidées
+Liste d’actions (checklist)
+
+Ajouter des dépenses
+
+Planifier changement de régime
+
+Activer rappels
+
+Chaque action :
+
+Effort (faible / moyen)
+
+Gain estimé
+
+🖥️ ÉCRAN 7 — Upgrade / paiement
+Message
+
+Cette optimisation peut vous faire économiser 1 700 € cette année.
+
+Offre
+
+12 €/mois
+
+Annulation à tout moment
+
+CTA : Débloquer mon optimisation
+
+🎨 Ligne graphique
+
+Fond clair
+
+Cartes blanches, ombres douces
+
+Vert = gain / action
+
+Rouge = perte / risque
+
+Typo lisible, peu de texte
+
+🧠 Principes UX clés
+
+1 écran = 1 idée
+
+Chiffres gros, texte simple
+
+Toujours montrer le gain
+
+Jamais de jargon fiscal
