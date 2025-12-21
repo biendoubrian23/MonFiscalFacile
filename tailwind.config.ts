@@ -33,6 +33,15 @@ const config: Config = {
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
       },
+      animation: {
+        float: "float 4s ease-in-out infinite",
+      },
+      keyframes: {
+        float: {
+          "0%, 100%": { transform: "translateY(0) translateX(0)" },
+          "50%": { transform: "translateY(-4px) translateX(2px)" },
+        },
+      },
     },
   },
   plugins: [],

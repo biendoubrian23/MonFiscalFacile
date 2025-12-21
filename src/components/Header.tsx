@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
 
@@ -12,8 +13,15 @@ export default function Header() {
       <div className="max-w-6xl mx-auto px-6">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="text-xl font-bold text-charcoal">
-            MonFiscalFacile
+          <Link href="/" className="flex items-center">
+            <Image
+              src="/logo.png"
+              alt="MonFiscalFacile"
+              width={150}
+              height={40}
+              className="h-10 w-auto"
+              priority
+            />
           </Link>
 
           {/* Navigation Desktop */}

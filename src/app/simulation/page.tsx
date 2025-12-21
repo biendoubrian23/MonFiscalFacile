@@ -1,34 +1,94 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ArrowLeft, ArrowRight, Plus, X } from "lucide-react";
+
+type SituationFamiliale = 'celibataire' | 'marie' | 'pacse' | 'divorce' | 'veuf';
+type Scolarite = 'maternelle' | 'primaire' | 'college' | 'lycee' | 'superieur' | null;
+
+type EnfantData = {
+  age: number;
+  scolarite: Scolarite;
+  fraisGarde: number;
+};
 
 type FormData = {
+  // Étape 1: Situation
   pays: string;
   statut: string;
+  situationFamiliale: SituationFamiliale;
+  
+  // Étape 2: Famille (conditionnelle)
+  nbEnfants: number;
+  enfants: EnfantData[];
+  conjointRevenu: number;
+  
+  // Étape 3: Activité
   activite: string;
+  
+  // Étape 4: Revenus
   caAnnuel: number;
   depensesMensuelles: number;
+  kmAnnuels: number;
+  puissanceFiscale: '3' | '5' | '7';
+  
+  // Étape 5: Fiscal
   tva: boolean;
 };
 
 const initialFormData: FormData = {
   pays: "",
   statut: "",
+  situationFamiliale: "celibataire",
+  nbEnfants: 0,
+  enfants: [],
+  conjointRevenu: 0,
   activite: "",
   caAnnuel: 36000,
   depensesMensuelles: 400,
+  kmAnnuels: 0,
+  puissanceFiscale: '5',
   tva: false,
 };
 
 export default function SimulationPage() {
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<FormData>(initialFormData);
-  const totalSteps = 4;
+  
+  // Nombre d'étapes dynamique selon la situation
+  const hasFamily = formData.situationFamiliale !== 'celibataire' || formData.nbEnfants > 0;
+  const totalSteps = hasFamily ? 5 : 4;
 
-  const updateFormData = (field: keyof FormData, value: string | number | boolean) => {
+  const updateFormData = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const ajouterEnfant = () => {
+    setFormData(prev => ({
+      ...prev,
+      nbEnfants: prev.nbEnfants + 1,
+      enfants: [...prev.enfants, { age: 5, scolarite: null, fraisGarde: 0 }],
+    }));
+  };
+
+  const supprimerEnfant = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      nbEnfants: Math.max(0, prev.nbEnfants - 1),
+      enfants: prev.enfants.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateEnfant = (index: number, field: keyof EnfantData, value: number | Scolarite) => {
+    setFormData(prev => ({
+      ...prev,
+      enfants: prev.enfants.map((e, i) => 
+        i === index ? { ...e, [field]: value } : e
+      ),
+    }));
   };
 
   const nextStep = () => {
@@ -42,12 +102,65 @@ export default function SimulationPage() {
   const canProceed = () => {
     switch (step) {
       case 1: return formData.pays !== "" && formData.statut !== "";
-      case 2: return formData.activite !== "";
-      case 3: return true;
+      case 2: 
+        if (hasFamily) return true; // Étape famille optionnelle
+        return formData.activite !== "";
+      case 3: 
+        if (hasFamily) return formData.activite !== "";
+        return true;
       case 4: return true;
+      case 5: return true;
       default: return false;
     }
   };
+
+  // Sauvegarde en localStorage pour persister les données
+  useEffect(() => {
+    const saved = localStorage.getItem('mff_simulation');
+    if (saved) {
+      try {
+        setFormData(JSON.parse(saved));
+      } catch {
+        // Ignorer
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('mff_simulation', JSON.stringify(formData));
+  }, [formData]);
+
+  const handleSubmit = () => {
+    // Sauvegarder et rediriger vers le dashboard
+    localStorage.setItem('mff_simulation', JSON.stringify(formData));
+    router.push('/dashboard');
+  };
+
+  // Déterminer le contenu de l'étape actuelle
+  const getStepContent = () => {
+    if (hasFamily) {
+      // 5 étapes
+      switch (step) {
+        case 1: return 'situation';
+        case 2: return 'famille';
+        case 3: return 'activite';
+        case 4: return 'revenus';
+        case 5: return 'fiscal';
+        default: return 'situation';
+      }
+    } else {
+      // 4 étapes
+      switch (step) {
+        case 1: return 'situation';
+        case 2: return 'activite';
+        case 3: return 'revenus';
+        case 4: return 'fiscal';
+        default: return 'situation';
+      }
+    }
+  };
+
+  const currentContent = getStepContent();
 
   return (
     <main className="min-h-screen bg-offwhite">
@@ -76,7 +189,7 @@ export default function SimulationPage() {
         </div>
 
         {/* Étape 1 : Situation */}
-        {step === 1 && (
+        {currentContent === 'situation' && (
           <div className="space-y-8">
             <div>
               <h1 className="text-3xl font-bold text-charcoal mb-2">
@@ -96,6 +209,7 @@ export default function SimulationPage() {
                   value={formData.pays}
                   onChange={(e) => updateFormData("pays", e.target.value)}
                   className="w-full border border-gray-300 px-4 py-3 text-charcoal bg-white focus:border-primary-500 focus:outline-none"
+                  title="Sélectionnez votre pays de résidence"
                 >
                   <option value="">Sélectionnez votre pays</option>
                   <option value="france">France</option>
@@ -130,12 +244,194 @@ export default function SimulationPage() {
                   ))}
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-2">
+                  Situation familiale
+                </label>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { value: "celibataire", label: "Célibataire" },
+                    { value: "marie", label: "Marié(e)" },
+                    { value: "pacse", label: "Pacsé(e)" },
+                    { value: "divorce", label: "Divorcé(e)" },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => updateFormData("situationFamiliale", option.value as SituationFamiliale)}
+                      className={`border p-3 text-center transition-all ${
+                        formData.situationFamiliale === option.value
+                          ? "border-primary-500 bg-primary-50"
+                          : "border-gray-200 bg-white hover:border-gray-300"
+                      }`}
+                    >
+                      <span className="font-medium text-charcoal text-sm">{option.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-2">
+                  Avez-vous des enfants à charge ?
+                </label>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => {
+                      if (formData.nbEnfants === 0) ajouterEnfant();
+                    }}
+                    className={`flex-1 border p-3 text-center transition-all ${
+                      formData.nbEnfants > 0
+                        ? "border-primary-500 bg-primary-50"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="font-medium text-charcoal">Oui</span>
+                  </button>
+                  <button
+                    onClick={() => updateFormData("nbEnfants", 0)}
+                    className={`flex-1 border p-3 text-center transition-all ${
+                      formData.nbEnfants === 0
+                        ? "border-primary-500 bg-primary-50"
+                        : "border-gray-200 bg-white hover:border-gray-300"
+                    }`}
+                  >
+                    <span className="font-medium text-charcoal">Non</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Étape 2 : Activité */}
-        {step === 2 && (
+        {/* Étape Famille (conditionnelle) */}
+        {currentContent === 'famille' && (
+          <div className="space-y-8">
+            <div>
+              <h1 className="text-3xl font-bold text-charcoal mb-2">
+                Votre famille
+              </h1>
+              <p className="text-slate">
+                Ces informations nous permettent d'optimiser vos avantages fiscaux.
+              </p>
+            </div>
+
+            {(formData.situationFamiliale === 'marie' || formData.situationFamiliale === 'pacse') && (
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-2">
+                  Revenus annuels de votre conjoint(e)
+                </label>
+                <input
+                  type="number"
+                  value={formData.conjointRevenu}
+                  onChange={(e) => updateFormData("conjointRevenu", parseInt(e.target.value) || 0)}
+                  className="w-full border border-gray-300 px-4 py-3 text-charcoal bg-white focus:border-primary-500 focus:outline-none"
+                  placeholder="0"
+                />
+                <p className="text-xs text-slate mt-1">Laissez 0 si sans revenus</p>
+              </div>
+            )}
+
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <label className="block text-sm font-medium text-charcoal">
+                  Vos enfants à charge ({formData.nbEnfants})
+                </label>
+                <button
+                  onClick={ajouterEnfant}
+                  className="flex items-center gap-1 text-primary-500 hover:text-primary-600 text-sm font-medium"
+                >
+                  <Plus size={16} />
+                  Ajouter
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                {formData.enfants.map((enfant, index) => (
+                  <div key={index} className="bg-white border border-gray-200 p-4">
+                    <div className="flex justify-between items-start mb-4">
+                      <span className="text-sm font-medium text-charcoal">Enfant {index + 1}</span>
+                      <button
+                        onClick={() => supprimerEnfant(index)}
+                        className="text-slate hover:text-danger transition-colors"
+                        aria-label="Supprimer cet enfant"
+                        title="Supprimer"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-xs text-slate mb-1">Âge</label>
+                        <input
+                          type="number"
+                          value={enfant.age}
+                          onChange={(e) => updateEnfant(index, 'age', parseInt(e.target.value) || 0)}
+                          className="w-full border border-gray-300 px-3 py-2 text-charcoal bg-white focus:border-primary-500 focus:outline-none text-sm"
+                          min="0"
+                          max="25"
+                          title="Âge de l'enfant"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs text-slate mb-1">Scolarité</label>
+                        <select
+                          value={enfant.scolarite || ''}
+                          onChange={(e) => updateEnfant(index, 'scolarite', e.target.value as Scolarite || null)}
+                          className="w-full border border-gray-300 px-3 py-2 text-charcoal bg-white focus:border-primary-500 focus:outline-none text-sm"
+                          title="Niveau de scolarité"
+                        >
+                          <option value="">Non scolarisé</option>
+                          <option value="maternelle">Maternelle</option>
+                          <option value="primaire">Primaire</option>
+                          <option value="college">Collège</option>
+                          <option value="lycee">Lycée</option>
+                          <option value="superieur">Supérieur</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    {enfant.age < 6 && (
+                      <div className="mt-4">
+                        <label className="block text-xs text-slate mb-1">
+                          Frais de garde mensuels (crèche, nounou...)
+                        </label>
+                        <input
+                          type="number"
+                          value={enfant.fraisGarde}
+                          onChange={(e) => updateEnfant(index, 'fraisGarde', parseInt(e.target.value) || 0)}
+                          className="w-full border border-gray-300 px-3 py-2 text-charcoal bg-white focus:border-primary-500 focus:outline-none text-sm"
+                          placeholder="0"
+                          title="Frais de garde mensuels"
+                        />
+                        <p className="text-xs text-primary-600 mt-1">
+                          Crédit d'impôt de 50% sur ces frais
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {formData.enfants.length === 0 && (
+                  <div className="text-center py-8 bg-gray-50 border border-gray-200">
+                    <p className="text-slate text-sm mb-4">Aucun enfant ajouté</p>
+                    <button
+                      onClick={ajouterEnfant}
+                      className="text-primary-500 hover:text-primary-600 font-medium text-sm"
+                    >
+                      Ajouter un enfant
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Étape Activité */}
+        {currentContent === 'activite' && (
           <div className="space-y-8">
             <div>
               <h1 className="text-3xl font-bold text-charcoal mb-2">
@@ -173,8 +469,8 @@ export default function SimulationPage() {
           </div>
         )}
 
-        {/* Étape 3 : Revenus */}
-        {step === 3 && (
+        {/* Étape Revenus */}
+        {currentContent === 'revenus' && (
           <div className="space-y-8">
             <div>
               <h1 className="text-3xl font-bold text-charcoal mb-2">
@@ -198,6 +494,7 @@ export default function SimulationPage() {
                   value={formData.caAnnuel}
                   onChange={(e) => updateFormData("caAnnuel", parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-200 appearance-none cursor-pointer accent-primary-500"
+                  title="Chiffre d'affaires annuel"
                 />
                 <div className="flex justify-between text-xs text-slate mt-2">
                   <span>10 000€</span>
@@ -217,57 +514,138 @@ export default function SimulationPage() {
                   value={formData.depensesMensuelles}
                   onChange={(e) => updateFormData("depensesMensuelles", parseInt(e.target.value))}
                   className="w-full h-2 bg-gray-200 appearance-none cursor-pointer accent-primary-500"
+                  title="Dépenses professionnelles mensuelles"
                 />
                 <div className="flex justify-between text-xs text-slate mt-2">
                   <span>0€</span>
                   <span>3 000€</span>
                 </div>
               </div>
+
+              {/* Frais kilométriques */}
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-4">
+                  Kilomètres professionnels annuels : <span className="text-primary-500 font-bold">{formData.kmAnnuels?.toLocaleString() || 0} km</span>
+                </label>
+                <input
+                  type="range"
+                  min="0"
+                  max="30000"
+                  step="500"
+                  value={formData.kmAnnuels || 0}
+                  onChange={(e) => updateFormData("kmAnnuels", parseInt(e.target.value))}
+                  className="w-full h-2 bg-gray-200 appearance-none cursor-pointer accent-primary-500"
+                  title="Kilomètres professionnels annuels"
+                />
+                <div className="flex justify-between text-xs text-slate mt-2">
+                  <span>0 km</span>
+                  <span>30 000 km</span>
+                </div>
+                {(formData.kmAnnuels || 0) > 0 && (
+                  <div className="mt-4 grid grid-cols-3 gap-3">
+                    {(['3', '5', '7'] as const).map((cv) => (
+                      <button
+                        key={cv}
+                        onClick={() => updateFormData("puissanceFiscale", cv)}
+                        className={`border p-3 text-center transition-all ${
+                          formData.puissanceFiscale === cv
+                            ? "border-primary-500 bg-primary-50"
+                            : "border-gray-200 bg-white hover:border-gray-300"
+                        }`}
+                      >
+                        <span className="block font-semibold text-charcoal">{cv} CV</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Étape 4 : TVA */}
-        {step === 4 && (
+        {/* Étape Fiscal (TVA + Résumé) */}
+        {currentContent === 'fiscal' && (
           <div className="space-y-8">
             <div>
               <h1 className="text-3xl font-bold text-charcoal mb-2">
-                TVA
+                Situation fiscale
               </h1>
               <p className="text-slate">
-                Êtes-vous assujetti à la TVA ?
+                Dernières informations pour votre diagnostic.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <button
-                onClick={() => updateFormData("tva", false)}
-                className={`border p-6 text-center transition-all ${
-                  !formData.tva
-                    ? "border-primary-500 bg-primary-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-              >
-                <span className="block font-semibold text-charcoal text-lg">Non</span>
-                <span className="text-sm text-slate">Franchise en base</span>
-              </button>
-              <button
-                onClick={() => updateFormData("tva", true)}
-                className={`border p-6 text-center transition-all ${
-                  formData.tva
-                    ? "border-primary-500 bg-primary-50"
-                    : "border-gray-200 bg-white hover:border-gray-300"
-                }`}
-              >
-                <span className="block font-semibold text-charcoal text-lg">Oui</span>
-                <span className="text-sm text-slate">TVA collectée</span>
-              </button>
+            {/* TVA */}
+            <div>
+              <h2 className="text-lg font-semibold text-charcoal mb-4">TVA</h2>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => updateFormData("tva", false)}
+                  className={`border p-6 text-center transition-all ${
+                    !formData.tva
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <span className="block font-semibold text-charcoal text-lg">Non</span>
+                  <span className="text-sm text-slate">Franchise en base</span>
+                </button>
+                <button
+                  onClick={() => updateFormData("tva", true)}
+                  className={`border p-6 text-center transition-all ${
+                    formData.tva
+                      ? "border-primary-500 bg-primary-50"
+                      : "border-gray-200 bg-white hover:border-gray-300"
+                  }`}
+                >
+                  <span className="block font-semibold text-charcoal text-lg">Oui</span>
+                  <span className="text-sm text-slate">TVA collectée</span>
+                </button>
+              </div>
+              <div className="mt-4 bg-gray-50 border border-gray-200 p-4">
+                <p className="text-sm text-slate">
+                  En France, vous êtes exonéré de TVA si votre CA annuel ne dépasse pas 36 800€ (services) ou 91 900€ (vente).
+                </p>
+              </div>
             </div>
 
-            <div className="bg-gray-50 border border-gray-200 p-4">
-              <p className="text-sm text-slate">
-                En France, vous êtes exonéré de TVA si votre CA annuel ne dépasse pas 36 800€ (services) ou 91 900€ (vente).
-              </p>
+            {/* Récapitulatif */}
+            <div className="mt-8 bg-primary-50 border border-primary-200 p-6">
+              <h2 className="text-lg font-semibold text-charcoal mb-4">Récapitulatif de votre profil</h2>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-slate">Statut</span>
+                  <span className="font-medium text-charcoal capitalize">{formData.statut.replace('-', ' ')}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate">Situation</span>
+                  <span className="font-medium text-charcoal capitalize">{formData.situationFamiliale}</span>
+                </div>
+                {formData.nbEnfants > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate">Enfants</span>
+                    <span className="font-medium text-charcoal">{formData.nbEnfants} enfant{formData.nbEnfants > 1 ? 's' : ''}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span className="text-slate">Activité</span>
+                  <span className="font-medium text-charcoal capitalize">{formData.activite}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate">CA estimé</span>
+                  <span className="font-medium text-charcoal">{formData.caAnnuel.toLocaleString()}€/an</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate">Dépenses</span>
+                  <span className="font-medium text-charcoal">{formData.depensesMensuelles}€/mois</span>
+                </div>
+                {(formData.kmAnnuels || 0) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-slate">Frais km</span>
+                    <span className="font-medium text-charcoal">{formData.kmAnnuels?.toLocaleString()} km ({formData.puissanceFiscale} CV)</span>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
@@ -300,13 +678,13 @@ export default function SimulationPage() {
               <ArrowRight size={20} />
             </button>
           ) : (
-            <Link
-              href="/dashboard"
+            <button
+              onClick={handleSubmit}
               className="flex items-center gap-2 bg-primary-500 text-white px-8 py-3 font-medium hover:bg-primary-600 transition-all"
             >
               Voir mon diagnostic
               <ArrowRight size={20} />
-            </Link>
+            </button>
           )}
         </div>
       </div>

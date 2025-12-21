@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export default function HowItWorks() {
   const steps = [
     {
@@ -18,8 +20,47 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section id="comment-ca-marche" className="py-20 px-6 bg-white">
-      <div className="max-w-6xl mx-auto">
+    <section id="comment-ca-marche" className="-mt-32 pb-8 px-6 bg-white">
+      <div className="max-w-7xl mx-auto">
+        {/* Section Problème */}
+        <div className="grid lg:grid-cols-2 gap-8 items-center mb-16">
+          {/* Image à gauche */}
+          <div className="relative aspect-square max-w-3xl mx-auto lg:mx-0 min-h-[950px] lg:min-h-[800px]">
+            <Image
+              src="/section2.png"
+              alt="La complexité fiscale qui submerge les indépendants"
+              fill
+              className="object-contain scale-[1.35] -translate-x-20"
+            />
+          </div>
+          
+          {/* Texte à droite */}
+          <div className="space-y-6">
+            <h2 className="text-3xl md:text-4xl font-bold text-charcoal leading-tight">
+              Perdu dans la paperasse fiscale ?
+            </h2>
+            <div className="space-y-4 text-lg text-slate">
+              <p>
+                Chaque année, c'est la même histoire. Des dizaines de formulaires, 
+                des règles qui changent, des termes incompréhensibles.
+              </p>
+              <p>
+                Vous savez qu'il existe des moyens de payer moins d'impôts. 
+                Mais lesquels ? Par où commencer ?
+              </p>
+              <p className="font-medium text-charcoal">
+                Résultat : vous payez plus que nécessaire, sans même le savoir.
+              </p>
+            </div>
+            <div className="pt-4">
+              <p className="text-primary-600 font-semibold text-lg">
+                Et si quelqu'un faisait le tri pour vous ?
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Titre section étapes */}
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl font-bold text-charcoal mb-4">
             3 étapes. 3 minutes. Des économies.
