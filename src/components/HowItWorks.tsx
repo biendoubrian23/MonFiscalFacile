@@ -20,40 +20,42 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section id="comment-ca-marche" className="-mt-32 pb-8 px-6 bg-white">
+    <section id="comment-ca-marche" className="pt-8 md:pt-12 lg:-mt-32 pb-8 px-6 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Section Problème */}
-        <div className="grid lg:grid-cols-2 gap-8 items-center mb-16">
-          {/* Image à gauche */}
-          <div className="relative aspect-square max-w-3xl mx-auto lg:mx-0 min-h-[950px] lg:min-h-[800px]">
+        <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-8 items-center mb-8 lg:mb-16">
+          
+          {/* Titre - Mobile first (avant l'image) */}
+          <h2 className="lg:hidden text-3xl md:text-4xl font-bold text-charcoal leading-tight text-center -mb-24">
+            Perdu dans la paperasse fiscale ?
+          </h2>
+
+          {/* Image - Responsive : mobile/tablette/desktop */}
+          <div className="relative w-screen max-w-none -mx-6 lg:mx-0 lg:w-full lg:max-w-4xl mx-auto aspect-square min-h-[500px] sm:min-h-[600px] md:min-h-[700px] lg:min-h-[1040px] order-1 lg:order-none -mb-32 lg:-mb-20 lg:-mt-40">
             <Image
               src="/section2.png"
               alt="La complexité fiscale qui submerge les indépendants"
               fill
-              className="object-contain scale-[1.35] -translate-x-20"
+              className="object-contain scale-[1.4] lg:scale-[1.75] lg:-translate-x-20"
             />
           </div>
           
           {/* Texte à droite */}
-          <div className="space-y-6">
-            <h2 className="text-3xl md:text-4xl font-bold text-charcoal leading-tight">
+          <div className="space-y-6 order-2 lg:order-none text-justify lg:text-left">
+            {/* Titre Desktop */}
+            <h2 className="hidden lg:block text-3xl md:text-4xl font-bold text-charcoal leading-tight">
               Perdu dans la paperasse fiscale ?
             </h2>
             <div className="space-y-4 text-lg text-slate">
               <p>
-                Chaque année, c'est la même histoire. Des dizaines de formulaires, 
-                des règles qui changent, des termes incompréhensibles.
-              </p>
-              <p>
-                Vous savez qu'il existe des moyens de payer moins d'impôts. 
-                Mais lesquels ? Par où commencer ?
+                Chaque année, c'est la même histoire : des dizaines de formulaires, des règles qui changent, des termes incompréhensibles. Vous savez qu'il existe des moyens de payer moins d'impôts, mais lesquels ? Par où commencer ?
               </p>
               <p className="font-medium text-charcoal">
                 Résultat : vous payez plus que nécessaire, sans même le savoir.
               </p>
             </div>
             <div className="pt-4">
-              <p className="text-primary-600 font-semibold text-lg">
+              <p className="text-primary-600 font-semibold text-lg text-center lg:text-left">
                 Et si quelqu'un faisait le tri pour vous ?
               </p>
             </div>

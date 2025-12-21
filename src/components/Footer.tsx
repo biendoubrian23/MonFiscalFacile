@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -7,8 +8,8 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-8 mb-12">
           {/* Logo & Tagline */}
           <div className="md:col-span-2">
-            <Link href="/" className="text-xl font-bold text-charcoal">
-              MonFiscalFacile
+            <Link href="/" className="flex items-center">
+              <Image src="/logo.png" alt="MonFiscalFacile" width={150} height={40} className="h-8 w-auto" />
             </Link>
             <p className="mt-4 text-slate max-w-sm">
               Moins d'impôts. Sans devenir expert.

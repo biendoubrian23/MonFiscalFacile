@@ -25,7 +25,7 @@ export default function Header() {
           </Link>
 
           {/* Navigation Desktop */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden lg:flex items-center gap-8">
             <Link 
               href="#comment-ca-marche" 
               className="text-slate hover:text-charcoal transition-colors"
@@ -54,7 +54,7 @@ export default function Header() {
 
           {/* Menu Mobile Button */}
           <button
-            className="md:hidden p-2 text-charcoal"
+            className="lg:hidden p-2 text-charcoal"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Menu"
           >
@@ -65,7 +65,7 @@ export default function Header() {
 
       {/* Mobile Menu */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-200">
+        <div className="lg:hidden bg-white border-t border-gray-200">
           <nav className="flex flex-col px-6 py-4 gap-4">
             <Link 
               href="#comment-ca-marche" 

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { AlertTriangle, ArrowRight, TrendingDown, TrendingUp, Check, Lightbulb, ChevronRight } from "lucide-react";
+import Image from "next/image";
+import { AlertTriangle, ArrowRight, TrendingDown, TrendingUp, Check, Lightbulb, ChevronRight, Lock } from "lucide-react";
 import { genererDiagnostic } from "@/lib/fiscal/optimiseur";
+import { useAuth } from "@/contexts/AuthContext";
 import type { 
   ProfilUtilisateur, 
   DiagnosticFiscal, 
@@ -15,10 +17,64 @@ import type {
   ActionOptimisation
 } from "@/lib/fiscal/types";
 
+// Fonction pour formater les nombres (arrondi à l'entier)
+const formatMontant = (montant: number): string => {
+  return Math.round(montant).toLocaleString();
+};
+
+// Composant pour section verrouillée
+function LockedSection({ title, description, ctaText = "Débloquer" }: { title: string; description: string; ctaText?: string }) {
+  return (
+    <div className="relative bg-white border border-gray-200 p-8 overflow-hidden">
+      {/* Contenu flouté en arrière-plan */}
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/50 to-white z-10" />
+      
+      {/* Overlay avec cadenas */}
+      <div className="relative z-20 flex flex-col items-center justify-center text-center py-8">
+        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+          <Lock className="w-8 h-8 text-gray-400" />
+        </div>
+        <h3 className="text-lg font-semibold text-charcoal mb-2">{title}</h3>
+        <p className="text-slate text-sm mb-4 max-w-md">{description}</p>
+        <Link
+          href="/connexion"
+          className="bg-primary-500 text-white px-6 py-3 font-semibold hover:bg-primary-600 transition-all flex items-center gap-2"
+        >
+          {ctaText}
+          <ArrowRight size={18} />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// Composant pour alerte masquée
+function MaskedAlert({ index }: { index: number }) {
+  return (
+    <div className="bg-white border-l-4 border-l-amber-500 border border-gray-200 p-5">
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0 text-amber-500" />
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <div className="h-4 bg-gray-200 rounded w-48 blur-sm" />
+          </div>
+          <div className="h-3 bg-gray-100 rounded w-full blur-sm mt-2" />
+          <div className="h-3 bg-gray-100 rounded w-3/4 blur-sm mt-1" />
+        </div>
+        <Lock className="w-4 h-4 text-gray-400" />
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardPage() {
+  const { user, isPremium, isLoading: authLoading } = useAuth();
   const [diagnostic, setDiagnostic] = useState<DiagnosticFiscal | null>(null);
   const [profil, setProfil] = useState<ProfilUtilisateur | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  // Déterminer si l'utilisateur peut voir les détails
+  const isAuthenticated = !!user;
 
   // Charger les données de l'onboarding et générer le diagnostic
   useEffect(() => {
@@ -134,8 +190,8 @@ export default function DashboardPage() {
       <main className="min-h-screen bg-offwhite">
         <header className="bg-white border-b border-gray-200">
           <div className="max-w-6xl mx-auto px-6 py-4">
-            <Link href="/" className="text-xl font-bold text-charcoal">
-              MonFiscalFacile
+            <Link href="/" className="flex items-center">
+              <Image src="/logo.png" alt="MonFiscalFacile" width={150} height={40} className="h-8 w-auto" />
             </Link>
           </div>
         </header>
@@ -188,8 +244,8 @@ export default function DashboardPage() {
       {/* Header Dashboard */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold text-charcoal">
-            MonFiscalFacile
+          <Link href="/" className="flex items-center">
+            <Image src="/logo.png" alt="MonFiscalFacile" width={150} height={40} className="h-8 w-auto" />
           </Link>
           <nav className="flex items-center gap-6">
             <Link href="/dashboard" className="text-charcoal font-medium">
@@ -219,13 +275,13 @@ export default function DashboardPage() {
           <div className="bg-white border border-gray-200 p-6">
             <p className="text-sm text-slate mb-1">Chiffre d'affaires</p>
             <p className="text-3xl font-bold text-charcoal">
-              {profil.financier.caAnnuel.toLocaleString()}€
+              {formatMontant(profil.financier.caAnnuel)}€
             </p>
           </div>
           <div className="bg-white border border-gray-200 p-6">
             <p className="text-sm text-slate mb-1">Cotisations et impôts</p>
             <p className="text-3xl font-bold text-charcoal">
-              {situationActuelle.total.toLocaleString()}€
+              {formatMontant(situationActuelle.total)}€
             </p>
             <p className="text-xs text-slate mt-1">
               {Math.round((situationActuelle.total / profil.financier.caAnnuel) * 100)}% du CA
@@ -234,14 +290,14 @@ export default function DashboardPage() {
           <div className="bg-white border border-gray-200 p-6">
             <p className="text-sm text-slate mb-1">Revenu net estimé</p>
             <p className="text-3xl font-bold text-primary-600">
-              {(profil.financier.caAnnuel - situationActuelle.total).toLocaleString()}€
+              {formatMontant(profil.financier.caAnnuel - situationActuelle.total)}€
             </p>
           </div>
           <div className={`bg-white border p-6 ${nbActionsUrgentes > 0 ? 'border-danger/30' : 'border-primary-200'}`}>
             <p className="text-sm text-slate mb-1">Score optimisation</p>
             <div className="flex items-center gap-2">
               <p className={`text-3xl font-bold ${getScoreColor(tauxOptimisation)}`}>
-                {tauxOptimisation}%
+                {Math.round(tauxOptimisation)}%
               </p>
             </div>
             {nbActionsUrgentes > 0 && (
@@ -258,49 +314,79 @@ export default function DashboardPage() {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div className="text-white">
                 <p className="text-2xl font-bold mb-1">
-                  Économie potentielle : {economieMaximale.toLocaleString()}€ / an
+                  Économie potentielle : {formatMontant(economieMaximale)}€ / an
                 </p>
                 <p className="text-primary-100">
                   {actionsRecommandees.length} optimisation{actionsRecommandees.length > 1 ? 's' : ''} identifiée{actionsRecommandees.length > 1 ? 's' : ''} pour votre profil.
                 </p>
               </div>
-              <a
-                href="#actions"
-                className="bg-white text-primary-600 px-8 py-3 font-semibold hover:bg-primary-50 transition-all flex items-center gap-2 flex-shrink-0"
-              >
-                Voir les actions
-                <ArrowRight size={20} />
-              </a>
+              {isAuthenticated ? (
+                <a
+                  href="#actions"
+                  className="bg-white text-primary-600 px-8 py-3 font-semibold hover:bg-primary-50 transition-all flex items-center gap-2 flex-shrink-0"
+                >
+                  Voir les actions
+                  <ArrowRight size={20} />
+                </a>
+              ) : (
+                <Link
+                  href="/connexion"
+                  className="bg-white text-primary-600 px-8 py-3 font-semibold hover:bg-primary-50 transition-all flex items-center gap-2 flex-shrink-0"
+                >
+                  Débloquer mon plan
+                  <Lock size={18} />
+                </Link>
+              )}
             </div>
           </div>
         )}
 
-        {/* Alertes */}
+        {/* Alertes - Masquées si non connecté */}
         {alertes.length > 0 && (
           <section className="mb-8">
             <h2 className="text-xl font-bold text-charcoal mb-4">
-              Points d'attention
+              Points d'attention <span className="text-slate font-normal text-base">({alertes.length} détectés)</span>
             </h2>
-            <div className="grid md:grid-cols-2 gap-4">
-              {alertes.slice(0, 4).map((alerte: Alerte) => (
-                <div 
-                  key={alerte.id}
-                  className={`bg-white border-l-4 border border-gray-200 p-5 ${getAlertColor(alerte.type).split(' ')[0]}`}
-                >
-                  <div className="flex items-start gap-3">
-                    <AlertTriangle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${getAlertColor(alerte.type).split(' ')[1]}`} />
-                    <div>
-                      <h3 className="font-semibold text-charcoal mb-1">
-                        {alerte.titre}
-                      </h3>
-                      <p className="text-slate text-sm">
-                        {alerte.message}
-                      </p>
+            
+            {isAuthenticated ? (
+              <div className="grid md:grid-cols-2 gap-4">
+                {alertes.slice(0, 4).map((alerte: Alerte) => (
+                  <div 
+                    key={alerte.id}
+                    className={`bg-white border-l-4 border border-gray-200 p-5 ${getAlertColor(alerte.type).split(' ')[0]}`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${getAlertColor(alerte.type).split(' ')[1]}`} />
+                      <div>
+                        <h3 className="font-semibold text-charcoal mb-1">
+                          {alerte.titre}
+                        </h3>
+                        <p className="text-slate text-sm">
+                          {alerte.message}
+                        </p>
+                      </div>
                     </div>
                   </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  {[0, 1, 2, 3].slice(0, Math.min(alertes.length, 4)).map((i) => (
+                    <MaskedAlert key={i} index={i} />
+                  ))}
                 </div>
-              ))}
-            </div>
+                <div className="text-center py-4">
+                  <Link
+                    href="/connexion"
+                    className="inline-flex items-center gap-2 text-primary-600 font-semibold hover:text-primary-700"
+                  >
+                    <Lock size={16} />
+                    Créer un compte gratuit pour voir les détails
+                  </Link>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -330,13 +416,19 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Actions recommandées */}
+        {/* Actions recommandées - Verrouillées si non connecté */}
         <section id="actions" className="mb-8">
           <h2 className="text-xl font-bold text-charcoal mb-4">
-            Actions recommandées
+            Plan d'action personnalisé
           </h2>
           
-          {actionsRecommandees.length === 0 ? (
+          {!isAuthenticated ? (
+            <LockedSection
+              title="Débloquez votre plan d'action"
+              description={`${actionsRecommandees.length} actions identifiées pour économiser jusqu'à ${formatMontant(economieMaximale)}€ par an. Créez un compte gratuit pour voir les détails.`}
+              ctaText="Créer mon compte gratuit"
+            />
+          ) : actionsRecommandees.length === 0 ? (
             <div className="bg-white border border-gray-200 p-8 text-center">
               <Check className="w-12 h-12 text-primary-500 mx-auto mb-4" />
               <p className="text-lg font-medium text-charcoal mb-2">
@@ -348,7 +440,7 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              {actionsRecommandees.slice(0, 6).map((action: ActionOptimisation) => (
+              {actionsRecommandees.slice(0, isPremium ? 6 : 2).map((action: ActionOptimisation) => (
                 <div 
                   key={action.id}
                   className="bg-white border border-gray-200 p-6 hover:border-gray-300 transition-all"
@@ -409,43 +501,51 @@ export default function DashboardPage() {
         {/* Scénario optimal */}
         {meilleurScenario && meilleurScenario.economieVsActuel > 0 && (
           <section className="mb-8">
-            <div className="bg-white border border-gray-200 p-8">
-              <h2 className="text-xl font-bold text-charcoal mb-6">
-                Scénario optimisé : {meilleurScenario.nom}
-              </h2>
-              <p className="text-slate mb-6">{meilleurScenario.description}</p>
-              
-              <div className="grid md:grid-cols-3 gap-8 items-center">
-                <div className="text-center">
-                  <p className="text-sm text-slate uppercase tracking-wider mb-2">
-                    Situation actuelle
-                  </p>
-                  <p className="text-4xl font-bold text-charcoal">
-                    {situationActuelle.total.toLocaleString()}€
-                  </p>
-                  <p className="text-sm text-slate">par an en charges</p>
-                </div>
+            {!user ? (
+              <LockedSection 
+                title="Scénario optimisé"
+                description="Découvrez le meilleur scénario fiscal pour votre situation et économisez des milliers d'euros."
+                ctaText="Voir mon scénario optimal"
+              />
+            ) : (
+              <div className="bg-white border border-gray-200 p-8">
+                <h2 className="text-xl font-bold text-charcoal mb-6">
+                  Scénario optimisé : {meilleurScenario.nom}
+                </h2>
+                <p className="text-slate mb-6">{meilleurScenario.description}</p>
                 
-                <div className="text-center">
-                  <div className="bg-primary-500 text-white py-4 px-6">
-                    <p className="text-sm uppercase tracking-wider mb-1">Économie</p>
-                    <p className="text-3xl font-bold">
-                      +{meilleurScenario.economieVsActuel.toLocaleString()}€
+                <div className="grid md:grid-cols-3 gap-8 items-center">
+                  <div className="text-center">
+                    <p className="text-sm text-slate uppercase tracking-wider mb-2">
+                      Situation actuelle
                     </p>
+                    <p className="text-4xl font-bold text-charcoal">
+                      {situationActuelle.total.toLocaleString()}€
+                    </p>
+                    <p className="text-sm text-slate">par an en charges</p>
+                  </div>
+                  
+                  <div className="text-center">
+                    <div className="bg-primary-500 text-white py-4 px-6">
+                      <p className="text-sm uppercase tracking-wider mb-1">Économie</p>
+                      <p className="text-3xl font-bold">
+                        +{meilleurScenario.economieVsActuel.toLocaleString()}€
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="text-sm text-primary-600 uppercase tracking-wider mb-2">
+                      Après optimisation
+                    </p>
+                    <p className="text-4xl font-bold text-primary-600">
+                      {meilleurScenario.resultat.total.toLocaleString()}€
+                    </p>
+                    <p className="text-sm text-primary-600">par an en charges</p>
                   </div>
                 </div>
-                
-                <div className="text-center">
-                  <p className="text-sm text-primary-600 uppercase tracking-wider mb-2">
-                    Après optimisation
-                  </p>
-                  <p className="text-4xl font-bold text-primary-600">
-                    {meilleurScenario.resultat.total.toLocaleString()}€
-                  </p>
-                  <p className="text-sm text-primary-600">par an en charges</p>
-                </div>
               </div>
-            </div>
+            )}
           </section>
         )}
 
@@ -454,67 +554,104 @@ export default function DashboardPage() {
           <h2 className="text-xl font-bold text-charcoal mb-4">
             Détail de vos prélèvements
           </h2>
-          <div className="bg-white border border-gray-200 p-6">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-slate">Cotisations sociales</span>
-                <span className="font-semibold text-charcoal">
-                  {situationActuelle.cotisationsSociales.toLocaleString()}€
-                </span>
-              </div>
-              <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                <span className="text-slate">Impôt sur le revenu</span>
-                <span className="font-semibold text-charcoal">
-                  {situationActuelle.impotRevenu.toLocaleString()}€
-                </span>
-              </div>
-              {situationActuelle.cfe > 0 && (
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                  <span className="text-slate">CFE</span>
-                  <span className="font-semibold text-charcoal">
-                    {situationActuelle.cfe.toLocaleString()}€
-                  </span>
+          {!user ? (
+            <div className="relative bg-white border border-gray-200 p-6 overflow-hidden">
+              {/* Version floutée pour teaser */}
+              <div className="filter blur-sm pointer-events-none">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-slate">Cotisations sociales</span>
+                    <span className="font-semibold text-charcoal">●●●● €</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-slate">Impôt sur le revenu</span>
+                    <span className="font-semibold text-charcoal">●●●● €</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-slate">CFE</span>
+                    <span className="font-semibold text-charcoal">●●● €</span>
+                  </div>
+                  <div className="flex justify-between items-center py-3 bg-gray-50 px-4">
+                    <span className="font-medium text-charcoal">Total prélèvements</span>
+                    <span className="font-bold text-xl text-charcoal">●●●●● €</span>
+                  </div>
                 </div>
-              )}
-              {situationActuelle.tvaAPayer > 0 && (
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                  <span className="text-slate">TVA à payer</span>
-                  <span className="font-semibold text-charcoal">
-                    {situationActuelle.tvaAPayer.toLocaleString()}€
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between items-center py-3 bg-gray-50 px-4 -mx-6 mb-0">
-                <span className="font-medium text-charcoal">Total prélèvements</span>
-                <span className="font-bold text-xl text-charcoal">
-                  {situationActuelle.total.toLocaleString()}€
-                </span>
+              </div>
+              {/* Overlay pour débloquer */}
+              <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center">
+                <Lock className="w-8 h-8 text-gray-400 mb-3" />
+                <p className="text-sm text-slate mb-3">Créez votre compte pour voir le détail complet</p>
+                <Link 
+                  href="/connexion" 
+                  className="bg-primary-500 text-white px-4 py-2 text-sm font-semibold hover:bg-primary-600 transition-all"
+                >
+                  Débloquer le détail
+                </Link>
               </div>
             </div>
-            
-            {/* Détails techniques */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <p className="text-sm text-slate mb-2">Détails du calcul :</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                <div>
-                  <p className="text-slate">Base imposable</p>
-                  <p className="font-medium text-charcoal">{situationActuelle.baseImposable.toLocaleString()}€</p>
+          ) : (
+            <div className="bg-white border border-gray-200 p-6">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span className="text-slate">Cotisations sociales</span>
+                  <span className="font-semibold text-charcoal">
+                    {situationActuelle.cotisationsSociales.toLocaleString()}€
+                  </span>
                 </div>
-                <div>
-                  <p className="text-slate">Abattement</p>
-                  <p className="font-medium text-charcoal">{situationActuelle.abattement.toLocaleString()}€</p>
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                  <span className="text-slate">Impôt sur le revenu</span>
+                  <span className="font-semibold text-charcoal">
+                    {situationActuelle.impotRevenu.toLocaleString()}€
+                  </span>
                 </div>
-                <div>
-                  <p className="text-slate">Parts fiscales</p>
-                  <p className="font-medium text-charcoal">{situationActuelle.partsFiscales}</p>
+                {situationActuelle.cfe > 0 && (
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-slate">CFE</span>
+                    <span className="font-semibold text-charcoal">
+                      {situationActuelle.cfe.toLocaleString()}€
+                    </span>
+                  </div>
+                )}
+                {situationActuelle.tvaAPayer > 0 && (
+                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                    <span className="text-slate">TVA à payer</span>
+                    <span className="font-semibold text-charcoal">
+                      {situationActuelle.tvaAPayer.toLocaleString()}€
+                    </span>
+                  </div>
+                )}
+                <div className="flex justify-between items-center py-3 bg-gray-50 px-4 -mx-6 mb-0">
+                  <span className="font-medium text-charcoal">Total prélèvements</span>
+                  <span className="font-bold text-xl text-charcoal">
+                    {situationActuelle.total.toLocaleString()}€
+                  </span>
                 </div>
-                <div>
-                  <p className="text-slate">Taux marginal</p>
-                  <p className="font-medium text-charcoal">{situationActuelle.tauxMarginal}%</p>
+              </div>
+              
+              {/* Détails techniques */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <p className="text-sm text-slate mb-2">Détails du calcul :</p>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                  <div>
+                    <p className="text-slate">Base imposable</p>
+                    <p className="font-medium text-charcoal">{situationActuelle.baseImposable.toLocaleString()}€</p>
+                  </div>
+                  <div>
+                    <p className="text-slate">Abattement</p>
+                    <p className="font-medium text-charcoal">{situationActuelle.abattement.toLocaleString()}€</p>
+                  </div>
+                  <div>
+                    <p className="text-slate">Parts fiscales</p>
+                    <p className="font-medium text-charcoal">{situationActuelle.partsFiscales}</p>
+                  </div>
+                  <div>
+                    <p className="text-slate">Taux marginal</p>
+                    <p className="font-medium text-charcoal">{situationActuelle.tauxMarginal}%</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )}
         </section>
 
         {/* CTA final */}

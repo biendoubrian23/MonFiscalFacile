@@ -2,8 +2,35 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Plus, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Plus, X, Info } from "lucide-react";
+
+// Composant Infobulle
+function Tooltip({ text }: { text: string }) {
+  const [show, setShow] = useState(false);
+  
+  return (
+    <span className="relative inline-block ml-1">
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="text-slate hover:text-primary-500 transition-colors"
+        aria-label="Plus d'informations"
+      >
+        <Info size={16} />
+      </button>
+      {show && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-charcoal text-white text-xs rounded-lg shadow-lg">
+          {text}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-charcoal"></div>
+        </div>
+      )}
+    </span>
+  );
+}
 
 type SituationFamiliale = 'celibataire' | 'marie' | 'pacse' | 'divorce' | 'veuf';
 type Scolarite = 'maternelle' | 'primaire' | 'college' | 'lycee' | 'superieur' | null;
@@ -167,8 +194,8 @@ export default function SimulationPage() {
       {/* Header simplifié */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4">
-          <Link href="/" className="text-xl font-bold text-charcoal">
-            MonFiscalFacile
+          <Link href="/" className="flex items-center">
+            <Image src="/logo.png" alt="MonFiscalFacile" width={150} height={40} className="h-8 w-auto" />
           </Link>
         </div>
       </header>
@@ -504,8 +531,7 @@ export default function SimulationPage() {
 
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-4">
-                  Dépenses professionnelles mensuelles : <span className="text-primary-500 font-bold">{formData.depensesMensuelles}€</span>
-                </label>
+                  Dépenses professionnelles mensuelles : <span className="text-primary-500 font-bold">{formData.depensesMensuelles}€</span>                  <Tooltip text="Incluez vos achats de matériel, abonnements logiciels, téléphone, internet pro, formations, etc. Ces dépenses sont déductibles de votre revenu imposable." />                </label>
                 <input
                   type="range"
                   min="0"
@@ -526,6 +552,7 @@ export default function SimulationPage() {
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-4">
                   Kilomètres professionnels annuels : <span className="text-primary-500 font-bold">{formData.kmAnnuels?.toLocaleString() || 0} km</span>
+                  <Tooltip text="Kilomètres parcourus pour vos déplacements professionnels (clients, réunions, formations). Le barème kilométrique permet de déduire ces frais de vos revenus." />
                 </label>
                 <input
                   type="range"
@@ -542,7 +569,12 @@ export default function SimulationPage() {
                   <span>30 000 km</span>
                 </div>
                 {(formData.kmAnnuels || 0) > 0 && (
-                  <div className="mt-4 grid grid-cols-3 gap-3">
+                  <div className="mt-4">
+                    <p className="text-sm text-slate mb-2">
+                      Puissance fiscale du véhicule
+                      <Tooltip text="CV = Chevaux fiscaux. C'est la puissance administrative de votre véhicule (indiquée sur la carte grise). Plus elle est élevée, plus le montant déductible par km est important : 3CV ≈ 0,53€/km, 5CV ≈ 0,59€/km, 7CV+ ≈ 0,63€/km." />
+                    </p>
+                    <div className="grid grid-cols-3 gap-3">
                     {(['3', '5', '7'] as const).map((cv) => (
                       <button
                         key={cv}
@@ -556,6 +588,7 @@ export default function SimulationPage() {
                         <span className="block font-semibold text-charcoal">{cv} CV</span>
                       </button>
                     ))}
+                    </div>
                   </div>
                 )}
               </div>
