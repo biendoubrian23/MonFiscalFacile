@@ -44,6 +44,13 @@ export default function ConnexionPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  // Passe-droit dev : simuler une connexion
+  const handleDevLogin = () => {
+    localStorage.setItem("dev_mode", "true");
+    localStorage.setItem("dev_user", JSON.stringify({ name: "Brian", email: "brian@test.com" }));
+    router.push("/mon-espace");
+  };
+
   // Rediriger si déjà connecté
   useEffect(() => {
     if (user && !authLoading) {
@@ -303,6 +310,15 @@ export default function ConnexionPage() {
           </p>
         </div>
       </div>
+
+      {/* Passe-droit dev - bouton visible en bas à gauche */}
+      <button
+        onClick={handleDevLogin}
+        className="fixed bottom-4 left-4 px-3 py-2 bg-gray-800 hover:bg-primary-500 text-white rounded-lg text-xs font-medium transition-all shadow-lg flex items-center gap-2"
+        title="Mode Dev"
+      >
+        🚀 Dev
+      </button>
     </main>
   );
 }

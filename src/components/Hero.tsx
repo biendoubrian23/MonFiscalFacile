@@ -23,7 +23,7 @@ export default function Hero() {
             </h1>
 
             {/* Image MOBILE uniquement (< 768px) - Grande image comme avant */}
-            <div className="md:hidden flex justify-center -mt-16 -mb-8">
+            <div className="md:hidden flex justify-center -mt-16 -mb-8 pointer-events-none">
               <div className="relative w-screen max-w-none h-[350px] -mx-6">
                 <Image
                   src="/herosection1.png"
@@ -41,7 +41,7 @@ export default function Hero() {
             </div>
 
             {/* Image TABLETTE uniquement (768px - 1024px) - Image réduite et centrée */}
-            <div className="hidden md:flex lg:hidden justify-center mt-4 mb-4">
+            <div className="hidden md:flex lg:hidden justify-center mt-4 mb-4 pointer-events-none">
               <div className="relative w-full max-w-[50vw] h-[350px]">
                 <Image
                   src="/herosection1.png"
@@ -63,16 +63,16 @@ export default function Hero() {
               Sans comptable, sans jargon.
             </p>
 
-            <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 sm:gap-4 lg:!mt-8 mt-4">
+            <div className="flex flex-col sm:flex-row justify-center lg:justify-start gap-3 sm:gap-4 lg:!mt-8 mt-4 relative z-50">
               <Link 
                 href="/simulation"
-                className="bg-primary-500 text-white px-6 sm:px-8 py-3 sm:py-4 font-semibold text-base sm:text-lg hover:bg-primary-600 transition-all duration-200 text-center rounded-lg lg:rounded-none"
+                className="bg-primary-500 text-white px-6 sm:px-8 py-3 sm:py-4 font-semibold text-base sm:text-lg hover:bg-primary-600 hover:scale-105 active:scale-95 transition-all duration-200 text-center rounded-lg lg:rounded-none cursor-pointer shadow-md hover:shadow-lg"
               >
                 Simuler mon économie
               </Link>
               <Link 
                 href="#comment-ca-marche"
-                className="border-2 border-charcoal text-charcoal px-6 sm:px-8 py-3 sm:py-4 font-semibold text-base sm:text-lg hover:bg-charcoal hover:text-white transition-all duration-200 text-center rounded-lg lg:rounded-none"
+                className="border-2 border-charcoal text-charcoal px-6 sm:px-8 py-3 sm:py-4 font-semibold text-base sm:text-lg hover:bg-charcoal hover:text-white hover:scale-105 active:scale-95 transition-all duration-200 text-center rounded-lg lg:rounded-none cursor-pointer"
               >
                 Comment ça marche
               </Link>

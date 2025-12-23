@@ -3,675 +3,233 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { AlertTriangle, ArrowRight, TrendingDown, TrendingUp, Check, Lightbulb, ChevronRight, Lock } from "lucide-react";
+import { Lock, Info, TrendingDown, Wallet, PiggyBank, Calendar, Percent, ArrowRight } from "lucide-react";
 import { genererDiagnostic } from "@/lib/fiscal/optimiseur";
 import { useAuth } from "@/contexts/AuthContext";
-import type { 
-  ProfilUtilisateur, 
-  DiagnosticFiscal, 
-  StatutProfessionnel, 
-  TypeActivite, 
-  Enfant,
-  SituationFamiliale,
-  Alerte,
-  ActionOptimisation
-} from "@/lib/fiscal/types";
+import type { ProfilUtilisateur } from "@/lib/fiscal/types";
 
-// Fonction pour formater les nombres (arrondi à l'entier)
-const formatMontant = (montant: number): string => {
-  return Math.round(montant).toLocaleString();
-};
-
-// Composant pour section verrouillée
-function LockedSection({ title, description, ctaText = "Débloquer" }: { title: string; description: string; ctaText?: string }) {
+// Composant Infobulle simple
+function Infobulle({ texte }: { texte: string }) {
+  const [show, setShow] = useState(false);
   return (
-    <div className="relative bg-white border border-gray-200 p-8 overflow-hidden">
-      {/* Contenu flouté en arrière-plan */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/50 to-white z-10" />
-      
-      {/* Overlay avec cadenas */}
-      <div className="relative z-20 flex flex-col items-center justify-center text-center py-8">
-        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-          <Lock className="w-8 h-8 text-gray-400" />
+    <span className="relative inline-block ml-1">
+      <button
+        type="button"
+        onClick={() => setShow(!show)}
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        className="text-slate hover:text-primary-500 transition-colors"
+        aria-label="Plus d'informations"
+      >
+        <Info size={14} />
+      </button>
+      {show && (
+        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 bg-charcoal text-white text-xs rounded-lg shadow-lg">
+          {texte}
+          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-charcoal"></div>
         </div>
-        <h3 className="text-lg font-semibold text-charcoal mb-2">{title}</h3>
-        <p className="text-slate text-sm mb-4 max-w-md">{description}</p>
-        <Link
-          href="/connexion"
-          className="bg-primary-500 text-white px-6 py-3 font-semibold hover:bg-primary-600 transition-all flex items-center gap-2"
-        >
-          {ctaText}
-          <ArrowRight size={18} />
-        </Link>
-      </div>
-    </div>
+      )}
+    </span>
   );
 }
 
-// Composant pour alerte masquée
-function MaskedAlert({ index }: { index: number }) {
-  return (
-    <div className="bg-white border-l-4 border-l-amber-500 border border-gray-200 p-5">
-      <div className="flex items-start gap-3">
-        <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0 text-amber-500" />
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="h-4 bg-gray-200 rounded w-48 blur-sm" />
-          </div>
-          <div className="h-3 bg-gray-100 rounded w-full blur-sm mt-2" />
-          <div className="h-3 bg-gray-100 rounded w-3/4 blur-sm mt-1" />
-        </div>
-        <Lock className="w-4 h-4 text-gray-400" />
-      </div>
-    </div>
-  );
+// Formater un montant sans virgule
+function formatMontant(montant: number): string {
+  return Math.round(montant).toLocaleString('fr-FR');
 }
 
 export default function DashboardPage() {
-  const { user, isPremium, isLoading: authLoading } = useAuth();
-  const [diagnostic, setDiagnostic] = useState<DiagnosticFiscal | null>(null);
+  const { user } = useAuth();
   const [profil, setProfil] = useState<ProfilUtilisateur | null>(null);
-  const [loading, setLoading] = useState(true);
-  
-  // Déterminer si l'utilisateur peut voir les détails
-  const isAuthenticated = !!user;
+  const [diagnostic, setDiagnostic] = useState<ReturnType<typeof genererDiagnostic> | null>(null);
 
-  // Charger les données de l'onboarding et générer le diagnostic
   useEffect(() => {
-    const saved = localStorage.getItem('mff_simulation');
-    if (saved) {
+    const savedProfil = localStorage.getItem("simulation_profil");
+    if (savedProfil) {
       try {
-        const data = JSON.parse(saved);
-        
-        // Convertir les données du formulaire en ProfilUtilisateur (structure complète)
-        const profilConverti: ProfilUtilisateur = {
-          personnel: {
-            pays: data.pays || 'france',
-            age: 35, // Valeur par défaut, à demander dans le formulaire si besoin
-            situationFamiliale: data.situationFamiliale || 'celibataire',
-            conjointRevenu: data.conjointRevenu || 0,
-            enfants: convertirEnfants(data.enfants || []),
-          },
-          professionnel: {
-            statut: convertirStatut(data.statut),
-            typeActivite: convertirActivite(data.activite),
-            secteur: 'autre',
-            dateDebut: new Date(),
-            regimeActuel: data.statut === 'auto-entrepreneur' ? 'micro' : 'reel-simplifie',
-          },
-          financier: {
-            caAnnuel: data.caAnnuel || 36000,
-            depensesPro: {
-              localPro: 0,
-              assurancePro: 0,
-              cfe: 0,
-              internetPro: Math.round((data.depensesMensuelles || 0) * 0.1),
-              telephonePro: Math.round((data.depensesMensuelles || 0) * 0.05),
-              logiciels: Math.round((data.depensesMensuelles || 0) * 0.2),
-              materielInformatique: Math.round((data.depensesMensuelles || 0) * 0.15),
-              deplacements: 0,
-              formation: Math.round((data.depensesMensuelles || 0) * 0.1),
-              vehiculePro: (data.kmAnnuels || 0) > 0,
-              kmAnnuels: data.kmAnnuels || 0,
-              puissanceFiscale: parseInt(data.puissanceFiscale || '5'),
-              fraisVehiculeReels: 0,
-              coworking: Math.round((data.depensesMensuelles || 0) * 0.3),
-              fraisBancaires: Math.round((data.depensesMensuelles || 0) * 0.05),
-              comptable: Math.round((data.depensesMensuelles || 0) * 0.05),
-              autres: 0,
-            },
-            autresRevenus: 0,
-            patrimoineImmobilier: false,
-            creditImmobilier: false,
-          },
-          fiscal: {
-            tvaAssujetti: data.tva || false,
-            versementLiberatoire: false,
-            optionIS: false,
-            declarationCommune: data.situationFamiliale === 'marie' || data.situationFamiliale === 'pacse',
-          },
-        };
-        
-        setProfil(profilConverti);
-        
-        // Générer le diagnostic
-        const diag = genererDiagnostic(profilConverti);
+        const parsed = JSON.parse(savedProfil);
+        setProfil(parsed);
+        const diag = genererDiagnostic(parsed);
         setDiagnostic(diag);
       } catch (e) {
-        console.error('Erreur de parsing:', e);
+        console.error("Erreur parsing profil:", e);
       }
     }
-    setLoading(false);
   }, []);
-
-  // Fonctions de conversion
-  function convertirStatut(statut: string): StatutProfessionnel {
-    const mapping: Record<string, StatutProfessionnel> = {
-      'auto-entrepreneur': 'auto-entrepreneur',
-      'freelance': 'freelance',
-      'eurl': 'eurl',
-      'particulier': 'particulier',
-    };
-    return mapping[statut] || 'auto-entrepreneur';
-  }
-
-  function convertirActivite(activite: string): TypeActivite {
-    const mapping: Record<string, TypeActivite> = {
-      'service': 'service',
-      'vente': 'vente',
-      'mixte': 'mixte',
-    };
-    return mapping[activite] || 'service';
-  }
-
-  function convertirEnfants(enfants: { age: number; scolarite: string | null; fraisGarde: number }[]): Enfant[] {
-    return enfants.map(e => ({
-      age: e.age,
-      scolarite: e.scolarite as Enfant['scolarite'],
-      fraisGardeMensuel: e.fraisGarde || 0,
-      gardeAlternee: false,
-    }));
-  }
-
-  // États de chargement ou pas de données
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-offwhite flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent animate-spin mx-auto mb-4" />
-          <p className="text-slate">Analyse en cours...</p>
-        </div>
-      </main>
-    );
-  }
 
   if (!profil || !diagnostic) {
     return (
-      <main className="min-h-screen bg-offwhite">
-        <header className="bg-white border-b border-gray-200">
-          <div className="max-w-6xl mx-auto px-6 py-4">
-            <Link href="/" className="flex items-center">
-              <Image src="/logo.png" alt="MonFiscalFacile" width={150} height={40} className="h-8 w-auto" />
-            </Link>
-          </div>
-        </header>
-        <div className="max-w-2xl mx-auto px-6 py-16 text-center">
-          <h1 className="text-2xl font-bold text-charcoal mb-4">
-            Aucune donnée trouvée
-          </h1>
-          <p className="text-slate mb-8">
-            Faites d'abord une simulation pour voir votre diagnostic fiscal personnalisé.
-          </p>
-          <Link 
-            href="/simulation"
-            className="inline-block bg-primary-500 text-white px-8 py-4 font-semibold hover:bg-primary-600 transition-all"
-          >
-            Commencer la simulation
+      <main className="min-h-screen bg-offwhite flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-slate mb-4">Aucune simulation trouvée.</p>
+          <Link href="/simulation" className="text-primary-600 font-semibold hover:underline">
+            Lancer une simulation
           </Link>
         </div>
       </main>
     );
   }
 
-  // Extraire les données pour l'affichage
-  const { situationActuelle, meilleurScenario, alertes, actionsRecommandees, tauxOptimisation, economieMaximale } = diagnostic;
-  const nbActionsUrgentes = actionsRecommandees.filter((a: ActionOptimisation) => a.urgence === 'immediate').length;
-
-  // Déterminer la couleur du score
-  const getScoreColor = (score: number) => {
-    if (score >= 70) return 'text-primary-600';
-    if (score >= 40) return 'text-amber-500';
-    return 'text-danger';
-  };
-
-  const getScoreBg = (score: number) => {
-    if (score >= 70) return 'bg-primary-500';
-    if (score >= 40) return 'bg-amber-500';
-    return 'bg-danger';
-  };
-
-  const getAlertColor = (type: Alerte['type']) => {
-    switch (type) {
-      case 'danger': return 'border-l-danger text-danger';
-      case 'warning': return 'border-l-amber-500 text-amber-500';
-      case 'success': return 'border-l-primary-500 text-primary-500';
-      default: return 'border-l-blue-500 text-blue-500';
-    }
-  };
+  const { situationActuelle, meilleurScenario } = diagnostic;
+  const avant = Math.round(situationActuelle.total);
+  const economie = Math.round(meilleurScenario?.economieVsActuel || 0);
+  const apres = avant - economie; // Calcul correct : après = avant - économie
+  const caAnnuel = Math.round(profil.financier.caAnnuel);
+  const revenuNet = caAnnuel - avant;
+  const revenuNetApres = caAnnuel - apres;
+  const tauxPrelevement = Math.round((avant / caAnnuel) * 100);
+  const tauxApres = Math.round((apres / caAnnuel) * 100);
+  const economieParMois = Math.round(economie / 12);
 
   return (
     <main className="min-h-screen bg-offwhite">
-      {/* Header Dashboard */}
+      {/* Header simple */}
       <header className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
           <Link href="/" className="flex items-center">
             <Image src="/logo.png" alt="MonFiscalFacile" width={150} height={40} className="h-8 w-auto" />
           </Link>
-          <nav className="flex items-center gap-6">
-            <Link href="/dashboard" className="text-charcoal font-medium">
-              Dashboard
-            </Link>
-            <Link href="/simulation" className="text-slate hover:text-charcoal transition-colors">
-              Nouvelle simulation
-            </Link>
-          </nav>
+          <Link href="/simulation" className="text-slate text-sm hover:text-charcoal">
+            Nouvelle simulation
+          </Link>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Message de bienvenue */}
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-charcoal mb-2">
-            Votre diagnostic fiscal
-          </h1>
-          <p className="text-slate">
-            Basé sur votre profil de {profil.professionnel.statut.replace('-', ' ')} avec un CA de {profil.financier.caAnnuel.toLocaleString()}€
-            {profil.personnel.enfants.length > 0 && ` et ${profil.personnel.enfants.length} enfant${profil.personnel.enfants.length > 1 ? 's' : ''}`}
-          </p>
-        </div>
+      {/* Contenu principal */}
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+        <h1 className="text-xl sm:text-2xl font-bold text-charcoal mb-2 text-center">
+          Votre diagnostic fiscal
+        </h1>
+        <p className="text-slate text-center mb-8">
+          Basé sur un chiffre d'affaires de <span className="font-semibold">{formatMontant(caAnnuel)}€</span> par an
+        </p>
 
-        {/* KPIs principaux */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white border border-gray-200 p-6">
-            <p className="text-sm text-slate mb-1">Chiffre d'affaires</p>
-            <p className="text-3xl font-bold text-charcoal">
-              {formatMontant(profil.financier.caAnnuel)}€
+        {/* BLOC 1 : Résumé principal - 2 colonnes */}
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          {/* Ce que vous payez */}
+          <div className="bg-white border border-gray-200 p-4 sm:p-6 text-center">
+            <p className="text-slate text-xs sm:text-sm mb-1 flex items-center justify-center">
+              Aujourd'hui vous payez
+              <Infobulle texte="C'est le total de vos impôts et cotisations sociales par an, avec votre situation actuelle." />
             </p>
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-danger break-words">
+              {formatMontant(avant)}€
+            </p>
+            <p className="text-xs text-slate mt-1">par an</p>
           </div>
-          <div className="bg-white border border-gray-200 p-6">
-            <p className="text-sm text-slate mb-1">Cotisations et impôts</p>
-            <p className="text-3xl font-bold text-charcoal">
-              {formatMontant(situationActuelle.total)}€
+
+          {/* Après optimisation */}
+          <div className="bg-primary-50 border border-primary-200 p-4 sm:p-6 text-center">
+            <p className="text-primary-700 text-xs sm:text-sm mb-1 flex items-center justify-center">
+              Vous pourriez payer
+              <Infobulle texte="C'est ce que vous paieriez après avoir mis en place les optimisations légales adaptées à votre profil." />
             </p>
-            <p className="text-xs text-slate mt-1">
-              {Math.round((situationActuelle.total / profil.financier.caAnnuel) * 100)}% du CA
+            <p className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary-600 break-words">
+              {formatMontant(apres)}€
             </p>
-          </div>
-          <div className="bg-white border border-gray-200 p-6">
-            <p className="text-sm text-slate mb-1">Revenu net estimé</p>
-            <p className="text-3xl font-bold text-primary-600">
-              {formatMontant(profil.financier.caAnnuel - situationActuelle.total)}€
-            </p>
-          </div>
-          <div className={`bg-white border p-6 ${nbActionsUrgentes > 0 ? 'border-danger/30' : 'border-primary-200'}`}>
-            <p className="text-sm text-slate mb-1">Score optimisation</p>
-            <div className="flex items-center gap-2">
-              <p className={`text-3xl font-bold ${getScoreColor(tauxOptimisation)}`}>
-                {Math.round(tauxOptimisation)}%
-              </p>
-            </div>
-            {nbActionsUrgentes > 0 && (
-              <p className="text-xs text-danger mt-1">
-                {nbActionsUrgentes} action{nbActionsUrgentes > 1 ? 's' : ''} urgente{nbActionsUrgentes > 1 ? 's' : ''}
-              </p>
-            )}
+            <p className="text-xs text-primary-600 mt-1">par an</p>
           </div>
         </div>
 
-        {/* CTA économie */}
-        {economieMaximale > 0 && (
-          <div className="bg-primary-500 p-8 mb-8">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-              <div className="text-white">
-                <p className="text-2xl font-bold mb-1">
-                  Économie potentielle : {formatMontant(economieMaximale)}€ / an
-                </p>
-                <p className="text-primary-100">
-                  {actionsRecommandees.length} optimisation{actionsRecommandees.length > 1 ? 's' : ''} identifiée{actionsRecommandees.length > 1 ? 's' : ''} pour votre profil.
-                </p>
-              </div>
-              {isAuthenticated ? (
-                <a
-                  href="#actions"
-                  className="bg-white text-primary-600 px-8 py-3 font-semibold hover:bg-primary-50 transition-all flex items-center gap-2 flex-shrink-0"
-                >
-                  Voir les actions
-                  <ArrowRight size={20} />
-                </a>
-              ) : (
-                <Link
-                  href="/connexion"
-                  className="bg-white text-primary-600 px-8 py-3 font-semibold hover:bg-primary-50 transition-all flex items-center gap-2 flex-shrink-0"
-                >
-                  Débloquer mon plan
-                  <Lock size={18} />
-                </Link>
-              )}
+        {/* BLOC 2 : Économie mise en avant */}
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 sm:p-8 text-center text-white mb-6">
+          <p className="text-sm sm:text-base mb-2 opacity-90">Vous pouvez économiser</p>
+          <p className="text-4xl sm:text-5xl font-bold mb-2">{formatMontant(economie)}€</p>
+          <p className="text-sm opacity-90">soit <span className="font-semibold">{formatMontant(economieParMois)}€ par mois</span> dans votre poche</p>
+        </div>
+
+        {/* BLOC 3 : Détails complémentaires - 4 petites cartes */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+          {/* Revenu net actuel */}
+          <div className="bg-white border border-gray-200 p-3 sm:p-4 text-center">
+            <Wallet className="w-5 h-5 text-slate mx-auto mb-1" />
+            <p className="text-xs text-slate mb-1">Revenu net actuel</p>
+            <p className="text-lg sm:text-xl font-bold text-charcoal">{formatMontant(revenuNet)}€</p>
+          </div>
+
+          {/* Revenu net après */}
+          <div className="bg-white border border-gray-200 p-3 sm:p-4 text-center">
+            <PiggyBank className="w-5 h-5 text-primary-500 mx-auto mb-1" />
+            <p className="text-xs text-slate mb-1">Revenu net possible</p>
+            <p className="text-lg sm:text-xl font-bold text-primary-600">{formatMontant(revenuNetApres)}€</p>
+          </div>
+
+          {/* Taux prélèvement actuel */}
+          <div className="bg-white border border-gray-200 p-3 sm:p-4 text-center">
+            <Percent className="w-5 h-5 text-slate mx-auto mb-1" />
+            <p className="text-xs text-slate mb-1">Taux actuel</p>
+            <p className="text-lg sm:text-xl font-bold text-charcoal">{tauxPrelevement}%</p>
+          </div>
+
+          {/* Taux après */}
+          <div className="bg-white border border-gray-200 p-3 sm:p-4 text-center">
+            <TrendingDown className="w-5 h-5 text-primary-500 mx-auto mb-1" />
+            <p className="text-xs text-slate mb-1">Taux optimisé</p>
+            <p className="text-lg sm:text-xl font-bold text-primary-600">{tauxApres}%</p>
+          </div>
+        </div>
+
+        {/* BLOC 4 : Comparaison simple avant/après */}
+        <div className="bg-white border border-gray-200 p-4 sm:p-6 mb-6">
+          <h2 className="font-semibold text-charcoal mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5" />
+            En résumé sur 1 an
+          </h2>
+          <div className="space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <span className="text-slate">Votre chiffre d'affaires</span>
+              <span className="font-semibold text-charcoal">{formatMontant(caAnnuel)}€</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <span className="text-slate">Impôts + cotisations (actuellement)</span>
+              <span className="font-semibold text-danger">- {formatMontant(avant)}€</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-gray-100">
+              <span className="text-slate">Impôts + cotisations (après optimisation)</span>
+              <span className="font-semibold text-primary-600">- {formatMontant(apres)}€</span>
+            </div>
+            <div className="flex justify-between items-center py-2 bg-primary-50 px-3 -mx-3 rounded">
+              <span className="font-semibold text-charcoal">Gain annuel</span>
+              <span className="font-bold text-xl text-primary-600">+{formatMontant(economie)}€</span>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Alertes - Masquées si non connecté */}
-        {alertes.length > 0 && (
-          <section className="mb-8">
-            <h2 className="text-xl font-bold text-charcoal mb-4">
-              Points d'attention <span className="text-slate font-normal text-base">({alertes.length} détectés)</span>
-            </h2>
-            
-            {isAuthenticated ? (
-              <div className="grid md:grid-cols-2 gap-4">
-                {alertes.slice(0, 4).map((alerte: Alerte) => (
-                  <div 
-                    key={alerte.id}
-                    className={`bg-white border-l-4 border border-gray-200 p-5 ${getAlertColor(alerte.type).split(' ')[0]}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className={`w-5 h-5 mt-0.5 flex-shrink-0 ${getAlertColor(alerte.type).split(' ')[1]}`} />
-                      <div>
-                        <h3 className="font-semibold text-charcoal mb-1">
-                          {alerte.titre}
-                        </h3>
-                        <p className="text-slate text-sm">
-                          {alerte.message}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  {[0, 1, 2, 3].slice(0, Math.min(alertes.length, 4)).map((i) => (
-                    <MaskedAlert key={i} index={i} />
-                  ))}
-                </div>
-                <div className="text-center py-4">
-                  <Link
-                    href="/connexion"
-                    className="inline-flex items-center gap-2 text-primary-600 font-semibold hover:text-primary-700"
-                  >
-                    <Lock size={16} />
-                    Créer un compte gratuit pour voir les détails
-                  </Link>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Jauge d'optimisation */}
-        <section className="mb-8">
-          <div className="bg-white border border-gray-200 p-6">
-            <div className="flex justify-between items-center mb-4">
-              <p className="font-medium text-charcoal">Niveau d'optimisation</p>
-              <p className={`text-2xl font-bold ${getScoreColor(tauxOptimisation)}`}>
-                {tauxOptimisation}%
-              </p>
-            </div>
-            <div className="h-4 bg-gray-200">
-              <div 
-                className={`h-full transition-all ${getScoreBg(tauxOptimisation)}`}
-                style={{ width: `${tauxOptimisation}%` }}
-              />
-            </div>
-            <p className="text-sm text-slate mt-2">
-              {tauxOptimisation < 50 
-                ? `Vous pourriez optimiser davantage votre situation fiscale.`
-                : tauxOptimisation < 80 
-                ? `Bonne optimisation, quelques améliorations possibles.`
-                : `Excellente optimisation de votre situation.`
-              }
+        {/* BLOC 5 : Section floutée - Comment optimiser */}
+        <div className="bg-white border border-gray-200 p-6 relative overflow-hidden mb-6">
+          <div className="filter blur-[3px] pointer-events-none select-none opacity-70">
+            <h2 className="text-lg font-bold text-charcoal mb-4">Comment économiser {formatMontant(economie)}€ ?</h2>
+            <ul className="list-disc pl-6 space-y-2 text-slate text-sm">
+              <li>Déclarer vos frais réels pour maximiser vos déductions fiscales</li>
+              <li>Choisir le bon statut fiscal adapté à votre activité et revenus</li>
+              <li>Optimiser vos charges professionnelles (loyer, matériel, déplacements)</li>
+              <li>Profiter des exonérations et crédits d'impôt auxquels vous avez droit</li>
+              <li>Adapter votre mode de rémunération pour réduire les cotisations</li>
+              <li>Utiliser les dispositifs d'épargne retraite (PER) pour réduire l'impôt</li>
+              <li>Suivre un guide pas à pas pour tout mettre en place facilement</li>
+            </ul>
+          </div>
+          {/* Overlay pour débloquer - opacité réduite */}
+          <div className="absolute inset-0 bg-white/60 flex flex-col items-center justify-center z-10">
+            <Lock className="w-10 h-10 text-gray-400 mb-4" />
+            <p className="text-charcoal font-semibold mb-2 text-center">Débloquez votre plan d'optimisation</p>
+            <p className="text-sm text-slate mb-4 text-center max-w-xs px-4">
+              Découvrez exactement quoi faire pour économiser {formatMontant(economie)}€ par an.
             </p>
+            <Link 
+              href={user ? "/mon-espace" : "/connexion"} 
+              className="bg-primary-500 text-white px-6 py-3 font-semibold hover:bg-primary-600 transition-all flex items-center gap-2"
+            >
+              Débloquer mes optimisations
+              <ArrowRight size={18} />
+            </Link>
           </div>
-        </section>
+        </div>
 
-        {/* Actions recommandées - Verrouillées si non connecté */}
-        <section id="actions" className="mb-8">
-          <h2 className="text-xl font-bold text-charcoal mb-4">
-            Plan d'action personnalisé
-          </h2>
-          
-          {!isAuthenticated ? (
-            <LockedSection
-              title="Débloquez votre plan d'action"
-              description={`${actionsRecommandees.length} actions identifiées pour économiser jusqu'à ${formatMontant(economieMaximale)}€ par an. Créez un compte gratuit pour voir les détails.`}
-              ctaText="Créer mon compte gratuit"
-            />
-          ) : actionsRecommandees.length === 0 ? (
-            <div className="bg-white border border-gray-200 p-8 text-center">
-              <Check className="w-12 h-12 text-primary-500 mx-auto mb-4" />
-              <p className="text-lg font-medium text-charcoal mb-2">
-                Votre situation est bien optimisée
-              </p>
-              <p className="text-slate">
-                Aucune action urgente à effectuer pour le moment.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {actionsRecommandees.slice(0, isPremium ? 6 : 2).map((action: ActionOptimisation) => (
-                <div 
-                  key={action.id}
-                  className="bg-white border border-gray-200 p-6 hover:border-gray-300 transition-all"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex items-start gap-4">
-                      <div className={`w-10 h-10 flex items-center justify-center flex-shrink-0 ${
-                        action.urgence === 'immediate' ? 'bg-danger/10' :
-                        action.urgence === 'court-terme' ? 'bg-amber-100' :
-                        'bg-primary-50'
-                      }`}>
-                        {action.urgence === 'immediate' ? (
-                          <TrendingDown className="w-5 h-5 text-danger" />
-                        ) : action.urgence === 'court-terme' ? (
-                          <Lightbulb className="w-5 h-5 text-amber-600" />
-                        ) : (
-                          <TrendingUp className="w-5 h-5 text-primary-600" />
-                        )}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-charcoal">
-                            {action.titre}
-                          </h3>
-                          <span className={`text-xs px-2 py-0.5 ${
-                            action.urgence === 'immediate' ? 'bg-danger/10 text-danger' :
-                            action.urgence === 'court-terme' ? 'bg-amber-100 text-amber-700' :
-                            'bg-primary-50 text-primary-700'
-                          }`}>
-                            {action.urgence === 'immediate' ? 'Urgent' :
-                             action.urgence === 'court-terme' ? 'Recommandé' :
-                             'Optionnel'}
-                          </span>
-                          <span className={`text-xs px-2 py-0.5 bg-gray-100 text-gray-600`}>
-                            Effort {action.effort}
-                          </span>
-                        </div>
-                        <p className="text-slate text-sm mb-3">
-                          {action.description}
-                        </p>
-                        {action.gainEstime > 0 && (
-                          <div className="inline-block bg-primary-50 px-3 py-1">
-                            <p className="text-sm font-medium text-primary-700">
-                              Économie estimée : +{action.gainEstime.toLocaleString()}€ / an
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <ChevronRight className="w-5 h-5 text-slate flex-shrink-0" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
-        {/* Scénario optimal */}
-        {meilleurScenario && meilleurScenario.economieVsActuel > 0 && (
-          <section className="mb-8">
-            {!user ? (
-              <LockedSection 
-                title="Scénario optimisé"
-                description="Découvrez le meilleur scénario fiscal pour votre situation et économisez des milliers d'euros."
-                ctaText="Voir mon scénario optimal"
-              />
-            ) : (
-              <div className="bg-white border border-gray-200 p-8">
-                <h2 className="text-xl font-bold text-charcoal mb-6">
-                  Scénario optimisé : {meilleurScenario.nom}
-                </h2>
-                <p className="text-slate mb-6">{meilleurScenario.description}</p>
-                
-                <div className="grid md:grid-cols-3 gap-8 items-center">
-                  <div className="text-center">
-                    <p className="text-sm text-slate uppercase tracking-wider mb-2">
-                      Situation actuelle
-                    </p>
-                    <p className="text-4xl font-bold text-charcoal">
-                      {situationActuelle.total.toLocaleString()}€
-                    </p>
-                    <p className="text-sm text-slate">par an en charges</p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="bg-primary-500 text-white py-4 px-6">
-                      <p className="text-sm uppercase tracking-wider mb-1">Économie</p>
-                      <p className="text-3xl font-bold">
-                        +{meilleurScenario.economieVsActuel.toLocaleString()}€
-                      </p>
-                    </div>
-                  </div>
-                  
-                  <div className="text-center">
-                    <p className="text-sm text-primary-600 uppercase tracking-wider mb-2">
-                      Après optimisation
-                    </p>
-                    <p className="text-4xl font-bold text-primary-600">
-                      {meilleurScenario.resultat.total.toLocaleString()}€
-                    </p>
-                    <p className="text-sm text-primary-600">par an en charges</p>
-                  </div>
-                </div>
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Détail des calculs */}
-        <section className="mb-8">
-          <h2 className="text-xl font-bold text-charcoal mb-4">
-            Détail de vos prélèvements
-          </h2>
-          {!user ? (
-            <div className="relative bg-white border border-gray-200 p-6 overflow-hidden">
-              {/* Version floutée pour teaser */}
-              <div className="filter blur-sm pointer-events-none">
-                <div className="space-y-4">
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-slate">Cotisations sociales</span>
-                    <span className="font-semibold text-charcoal">●●●● €</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-slate">Impôt sur le revenu</span>
-                    <span className="font-semibold text-charcoal">●●●● €</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-slate">CFE</span>
-                    <span className="font-semibold text-charcoal">●●● €</span>
-                  </div>
-                  <div className="flex justify-between items-center py-3 bg-gray-50 px-4">
-                    <span className="font-medium text-charcoal">Total prélèvements</span>
-                    <span className="font-bold text-xl text-charcoal">●●●●● €</span>
-                  </div>
-                </div>
-              </div>
-              {/* Overlay pour débloquer */}
-              <div className="absolute inset-0 bg-white/80 flex flex-col items-center justify-center">
-                <Lock className="w-8 h-8 text-gray-400 mb-3" />
-                <p className="text-sm text-slate mb-3">Créez votre compte pour voir le détail complet</p>
-                <Link 
-                  href="/connexion" 
-                  className="bg-primary-500 text-white px-4 py-2 text-sm font-semibold hover:bg-primary-600 transition-all"
-                >
-                  Débloquer le détail
-                </Link>
-              </div>
-            </div>
-          ) : (
-            <div className="bg-white border border-gray-200 p-6">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                  <span className="text-slate">Cotisations sociales</span>
-                  <span className="font-semibold text-charcoal">
-                    {situationActuelle.cotisationsSociales.toLocaleString()}€
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                  <span className="text-slate">Impôt sur le revenu</span>
-                  <span className="font-semibold text-charcoal">
-                    {situationActuelle.impotRevenu.toLocaleString()}€
-                  </span>
-                </div>
-                {situationActuelle.cfe > 0 && (
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-slate">CFE</span>
-                    <span className="font-semibold text-charcoal">
-                      {situationActuelle.cfe.toLocaleString()}€
-                    </span>
-                  </div>
-                )}
-                {situationActuelle.tvaAPayer > 0 && (
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-slate">TVA à payer</span>
-                    <span className="font-semibold text-charcoal">
-                      {situationActuelle.tvaAPayer.toLocaleString()}€
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between items-center py-3 bg-gray-50 px-4 -mx-6 mb-0">
-                  <span className="font-medium text-charcoal">Total prélèvements</span>
-                  <span className="font-bold text-xl text-charcoal">
-                    {situationActuelle.total.toLocaleString()}€
-                  </span>
-                </div>
-              </div>
-              
-              {/* Détails techniques */}
-              <div className="mt-6 pt-6 border-t border-gray-200">
-                <p className="text-sm text-slate mb-2">Détails du calcul :</p>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <p className="text-slate">Base imposable</p>
-                    <p className="font-medium text-charcoal">{situationActuelle.baseImposable.toLocaleString()}€</p>
-                  </div>
-                  <div>
-                    <p className="text-slate">Abattement</p>
-                    <p className="font-medium text-charcoal">{situationActuelle.abattement.toLocaleString()}€</p>
-                  </div>
-                  <div>
-                    <p className="text-slate">Parts fiscales</p>
-                    <p className="font-medium text-charcoal">{situationActuelle.partsFiscales}</p>
-                  </div>
-                  <div>
-                    <p className="text-slate">Taux marginal</p>
-                    <p className="font-medium text-charcoal">{situationActuelle.tauxMarginal}%</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* CTA final */}
-        <section className="bg-white border border-gray-200 p-8 text-center">
-          <h2 className="text-xl font-bold text-charcoal mb-2">
-            Passez à l'action
-          </h2>
-          <p className="text-slate mb-6">
-            Accédez à l'accompagnement complet pour mettre en place ces optimisations.
-          </p>
-          <Link
-            href="/pricing"
-            className="inline-block bg-primary-500 text-white px-8 py-4 font-semibold hover:bg-primary-600 transition-all"
-          >
-            Voir les offres
-          </Link>
-          <p className="text-sm text-slate mt-3">
-            À partir de 12€/mois, annulation à tout moment
-          </p>
-        </section>
+        {/* Petit texte de réassurance */}
+        <p className="text-center text-xs text-slate mt-8">
+          100% légal • Adapté à votre situation • Accompagnement pas à pas
+        </p>
       </div>
     </main>
   );

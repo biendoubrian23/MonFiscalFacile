@@ -3,195 +3,341 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Plus, X, Info } from "lucide-react";
+import { ArrowRight, Lock, Euro, Users, Heart, Home, Sparkles } from "lucide-react";
 
-// Composant Infobulle
-function Tooltip({ text }: { text: string }) {
-  const [show, setShow] = useState(false);
-  
-  return (
-    <span className="relative inline-block ml-1">
-      <button
-        type="button"
-        onClick={() => setShow(!show)}
-        onMouseEnter={() => setShow(true)}
-        onMouseLeave={() => setShow(false)}
-        className="text-slate hover:text-primary-500 transition-colors"
-        aria-label="Plus d'informations"
-      >
-        <Info size={16} />
-      </button>
-      {show && (
-        <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 bg-charcoal text-white text-xs rounded-lg shadow-lg">
-          {text}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-charcoal"></div>
-        </div>
-      )}
-    </span>
-  );
-}
-
-type SituationFamiliale = 'celibataire' | 'marie' | 'pacse' | 'divorce' | 'veuf';
-type Scolarite = 'maternelle' | 'primaire' | 'college' | 'lycee' | 'superieur' | null;
-
-type EnfantData = {
-  age: number;
-  scolarite: Scolarite;
-  fraisGarde: number;
-};
-
+// Types pour le formulaire simplifié salariés
 type FormData = {
-  // Étape 1: Situation
-  pays: string;
-  statut: string;
-  situationFamiliale: SituationFamiliale;
-  
-  // Étape 2: Famille (conditionnelle)
+  salaireNet: number;
   nbEnfants: number;
-  enfants: EnfantData[];
-  conjointRevenu: number;
-  
-  // Étape 3: Activité
-  activite: string;
-  
-  // Étape 4: Revenus
-  caAnnuel: number;
-  depensesMensuelles: number;
-  kmAnnuels: number;
-  puissanceFiscale: '3' | '5' | '7';
-  
-  // Étape 5: Fiscal
-  tva: boolean;
+  faitDesDons: boolean;
+  montantDons: number;
+  donsParMois: boolean; // true = par mois, false = par an
+  estProprietaire: boolean;
 };
 
 const initialFormData: FormData = {
-  pays: "",
-  statut: "",
-  situationFamiliale: "celibataire",
+  salaireNet: 2500,
   nbEnfants: 0,
-  enfants: [],
-  conjointRevenu: 0,
-  activite: "",
-  caAnnuel: 36000,
-  depensesMensuelles: 400,
-  kmAnnuels: 0,
-  puissanceFiscale: '5',
-  tva: false,
+  faitDesDons: false,
+  montantDons: 0,
+  donsParMois: true,
+  estProprietaire: false,
 };
 
-export default function SimulationPage() {
-  const router = useRouter();
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<FormData>(initialFormData);
-  
-  // Nombre d'étapes dynamique selon la situation
-  const hasFamily = formData.situationFamiliale !== 'celibataire' || formData.nbEnfants > 0;
-  const totalSteps = hasFamily ? 5 : 4;
+// Animation de chargement avec textes aléatoires
+function LoadingAnimation({ onFinish }: { onFinish: () => void }) {
+  const messages = [
+    "Analyse de votre situation fiscale...",
+    "Calcul de votre impôt estimé...",
+    "Recherche des optimisations possibles...",
+    "Identification des déductions oubliées...",
+    "Vérification des crédits d'impôt...",
+    "Préparation de votre diagnostic personnalisé..."
+  ];
 
-  const updateFormData = <K extends keyof FormData>(field: K, value: FormData[K]) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
-  const ajouterEnfant = () => {
-    setFormData(prev => ({
-      ...prev,
-      nbEnfants: prev.nbEnfants + 1,
-      enfants: [...prev.enfants, { age: 5, scolarite: null, fraisGarde: 0 }],
-    }));
-  };
-
-  const supprimerEnfant = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      nbEnfants: Math.max(0, prev.nbEnfants - 1),
-      enfants: prev.enfants.filter((_, i) => i !== index),
-    }));
-  };
-
-  const updateEnfant = (index: number, field: keyof EnfantData, value: number | Scolarite) => {
-    setFormData(prev => ({
-      ...prev,
-      enfants: prev.enfants.map((e, i) => 
-        i === index ? { ...e, [field]: value } : e
-      ),
-    }));
-  };
-
-  const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1);
-  };
-
-  const prevStep = () => {
-    if (step > 1) setStep(step - 1);
-  };
-
-  const canProceed = () => {
-    switch (step) {
-      case 1: return formData.pays !== "" && formData.statut !== "";
-      case 2: 
-        if (hasFamily) return true; // Étape famille optionnelle
-        return formData.activite !== "";
-      case 3: 
-        if (hasFamily) return formData.activite !== "";
-        return true;
-      case 4: return true;
-      case 5: return true;
-      default: return false;
-    }
-  };
-
-  // Sauvegarde en localStorage pour persister les données
-  useEffect(() => {
-    const saved = localStorage.getItem('mff_simulation');
-    if (saved) {
-      try {
-        setFormData(JSON.parse(saved));
-      } catch {
-        // Ignorer
-      }
-    }
-  }, []);
+  const [currentMessage, setCurrentMessage] = useState(messages[0]);
+  const [progress, setProgress] = useState(0);
+  const duration = 5000; // 5 secondes total
 
   useEffect(() => {
-    localStorage.setItem('mff_simulation', JSON.stringify(formData));
-  }, [formData]);
-
-  const handleSubmit = () => {
-    // Sauvegarder et rediriger vers le dashboard
-    localStorage.setItem('mff_simulation', JSON.stringify(formData));
-    router.push('/dashboard');
-  };
-
-  // Déterminer le contenu de l'étape actuelle
-  const getStepContent = () => {
-    if (hasFamily) {
-      // 5 étapes
-      switch (step) {
-        case 1: return 'situation';
-        case 2: return 'famille';
-        case 3: return 'activite';
-        case 4: return 'revenus';
-        case 5: return 'fiscal';
-        default: return 'situation';
+    const startTime = Date.now();
+    
+    // Générer des durées aléatoires pour chaque message
+    const generateRandomDurations = () => {
+      const count = messages.length;
+      const durations: number[] = [];
+      let remaining = duration;
+      
+      for (let i = 0; i < count - 1; i++) {
+        const minDuration = 300;
+        const maxDuration = Math.min(1500, remaining - (count - i - 1) * 300);
+        const randomDuration = Math.floor(Math.random() * (maxDuration - minDuration)) + minDuration;
+        durations.push(randomDuration);
+        remaining -= randomDuration;
       }
-    } else {
-      // 4 étapes
-      switch (step) {
-        case 1: return 'situation';
-        case 2: return 'activite';
-        case 3: return 'revenus';
-        case 4: return 'fiscal';
-        default: return 'situation';
-      }
-    }
-  };
+      durations.push(remaining);
+      return durations;
+    };
 
-  const currentContent = getStepContent();
+    const durations = generateRandomDurations();
+    let elapsed = 0;
+
+    const messageTimers: NodeJS.Timeout[] = [];
+    durations.forEach((dur, i) => {
+      const timer = setTimeout(() => {
+        if (i < messages.length) {
+          setCurrentMessage(messages[i]);
+        }
+      }, elapsed);
+      messageTimers.push(timer);
+      elapsed += dur;
+    });
+
+    const progressInterval = setInterval(() => {
+      const now = Date.now();
+      const elapsedTime = now - startTime;
+      const newProgress = Math.min(elapsedTime / duration, 1);
+      setProgress(newProgress);
+
+      if (elapsedTime >= duration) {
+        clearInterval(progressInterval);
+        onFinish();
+      }
+    }, 50);
+
+    return () => {
+      clearInterval(progressInterval);
+      messageTimers.forEach(t => clearTimeout(t));
+    };
+  }, [onFinish]);
 
   return (
+    <main className="min-h-screen flex flex-col items-center justify-center bg-white px-6">
+      <div className="text-center max-w-md">
+        <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Sparkles className="w-8 h-8 text-primary-500 animate-pulse" />
+        </div>
+        
+        <p className="text-lg text-charcoal font-medium mb-8 h-8">
+          {currentMessage}
+        </p>
+        
+        <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+          <div
+            className="h-full bg-gradient-to-r from-primary-400 to-primary-600 rounded-full transition-all duration-100"
+            style={{ width: `${progress * 100}%` }}
+          />
+        </div>
+        
+        <p className="text-sm text-slate">
+          {Math.round(progress * 100)}%
+        </p>
+      </div>
+    </main>
+  );
+}
+
+// Calcul simplifié de l'impôt pour un salarié
+function calculerImpotSalarie(data: FormData) {
+  const salaireAnnuel = data.salaireNet * 12;
+  
+  // Abattement de 10% pour frais professionnels
+  const revenuImposable = salaireAnnuel * 0.9;
+  
+  // Calcul des parts fiscales
+  let parts = 1;
+  if (data.nbEnfants === 1) parts += 0.5;
+  else if (data.nbEnfants === 2) parts += 1;
+  else if (data.nbEnfants >= 3) parts += 1 + (data.nbEnfants - 2);
+  
+  // Quotient familial
+  const quotient = revenuImposable / parts;
+  
+  // Barème 2024
+  let impotParPart = 0;
+  if (quotient <= 11294) impotParPart = 0;
+  else if (quotient <= 28797) impotParPart = (quotient - 11294) * 0.11;
+  else if (quotient <= 82341) impotParPart = (28797 - 11294) * 0.11 + (quotient - 28797) * 0.30;
+  else if (quotient <= 177106) impotParPart = (28797 - 11294) * 0.11 + (82341 - 28797) * 0.30 + (quotient - 82341) * 0.41;
+  else impotParPart = (28797 - 11294) * 0.11 + (82341 - 28797) * 0.30 + (177106 - 82341) * 0.41 + (quotient - 177106) * 0.45;
+  
+  let impotBrut = Math.round(impotParPart * parts);
+  
+  // Réduction pour dons (66% du montant annuel)
+  const montantDonsAnnuel = data.donsParMois ? data.montantDons * 12 : data.montantDons;
+  const reductionDons = data.faitDesDons ? Math.round(montantDonsAnnuel * 0.66) : 0;
+  
+  // Impôt final
+  const impotFinal = Math.max(0, impotBrut - reductionDons);
+  
+  // Estimation des économies possibles
+  let tauxEconomie = 0.08;
+  if (data.nbEnfants > 0) tauxEconomie += 0.03;
+  if (!data.faitDesDons) tauxEconomie += 0.02;
+  if (data.estProprietaire) tauxEconomie += 0.02;
+  
+  const economieEstimee = Math.round(impotFinal * tauxEconomie);
+  
+  return {
+    salaireAnnuel,
+    revenuImposable: Math.round(revenuImposable),
+    parts,
+    impotBrut,
+    reductionDons,
+    impotFinal,
+    economieEstimee,
+    impotApresOptimisation: impotFinal - economieEstimee,
+    tauxImposition: Math.round((impotFinal / salaireAnnuel) * 100 * 10) / 10
+  };
+}
+
+export default function SimulationPage() {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [loading, setLoading] = useState(false);
+  const [showResults, setShowResults] = useState(false);
+  const [resultats, setResultats] = useState<ReturnType<typeof calculerImpotSalarie> | null>(null);
+
+  const totalSteps = 4;
+
+  const handleNext = () => {
+    if (step < totalSteps) {
+      setStep(step + 1);
+    } else {
+      setLoading(true);
+    }
+  };
+
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+    }
+  };
+
+  const handleLoadingFinish = () => {
+    const results = calculerImpotSalarie(formData);
+    setResultats(results);
+    setLoading(false);
+    setShowResults(true);
+  };
+
+  // Page de chargement
+  if (loading) {
+    return <LoadingAnimation onFinish={handleLoadingFinish} />;
+  }
+
+  // Page de résultats
+  if (showResults && resultats) {
+    return (
+      <main className="min-h-screen bg-offwhite">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200">
+          <div className="max-w-2xl mx-auto px-6 py-4 flex justify-between items-center">
+            <Link href="/" className="flex items-center">
+              <Image src="/logo.png" alt="MonFiscalFacile" width={150} height={40} className="h-8 w-auto" />
+            </Link>
+            <button
+              onClick={() => {
+                setShowResults(false);
+                setStep(1);
+                setFormData(initialFormData);
+              }}
+              className="text-slate text-sm hover:text-charcoal"
+            >
+              Nouvelle simulation
+            </button>
+          </div>
+        </header>
+
+        <div className="max-w-2xl mx-auto px-6 py-10">
+          {/* Titre */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-charcoal mb-2">
+              Estimation de votre impôt annuel
+            </h1>
+            <p className="text-slate">
+              Basé sur un salaire net de {formData.salaireNet.toLocaleString()}€/mois
+            </p>
+          </div>
+
+          {/* Résultat principal */}
+          <div className="bg-white border border-gray-200 p-6 mb-6 text-center">
+            <p className="text-slate text-sm mb-2">Votre impôt estimé</p>
+            <p className="text-5xl font-bold text-charcoal mb-2">
+              {resultats.impotFinal.toLocaleString()}€
+            </p>
+            <p className="text-slate text-sm">par an</p>
+          </div>
+
+          {/* Message accrocheur */}
+          <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-6 text-white text-center mb-6">
+            <p className="text-lg font-semibold mb-2">
+              Vous pourriez garder jusqu'à {resultats.economieEstimee.toLocaleString()}€ de plus
+            </p>
+            <p className="text-primary-100 text-sm">
+              en déclarant correctement ce que la plupart des gens oublient
+            </p>
+          </div>
+
+          {/* Section floutée - Optimisations */}
+          <div className="bg-white border border-gray-200 p-6 relative overflow-hidden">
+            <div className="filter blur-[4px] pointer-events-none select-none opacity-60">
+              <h2 className="text-lg font-bold text-charcoal mb-4">
+                Optimisations qui vous concernent
+              </h2>
+              
+              <div className="space-y-4">
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                  <div>
+                    <p className="font-medium text-charcoal">Frais réels déductibles</p>
+                    <p className="text-sm text-slate">Transport, repas, télétravail...</p>
+                  </div>
+                  <span className="text-lg font-bold text-primary-600">+●●● €</span>
+                </div>
+                
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                  <div>
+                    <p className="font-medium text-charcoal">Crédits d'impôt oubliés</p>
+                    <p className="text-sm text-slate">Emploi à domicile, garde d'enfants...</p>
+                  </div>
+                  <span className="text-lg font-bold text-primary-600">+●●● €</span>
+                </div>
+                
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                  <div>
+                    <p className="font-medium text-charcoal">Réductions fiscales</p>
+                    <p className="text-sm text-slate">Dons, investissements, épargne retraite...</p>
+                  </div>
+                  <span className="text-lg font-bold text-primary-600">+●●● €</span>
+                </div>
+
+                <div className="flex justify-between items-center py-3 border-b border-gray-100">
+                  <div>
+                    <p className="font-medium text-charcoal">Avantages famille</p>
+                    <p className="text-sm text-slate">Frais de scolarité, garde, activités...</p>
+                  </div>
+                  <span className="text-lg font-bold text-primary-600">+●●● €</span>
+                </div>
+
+                <div className="flex justify-between items-center py-3 bg-primary-50 px-4 -mx-4 rounded">
+                  <span className="font-semibold text-charcoal">Total économies possibles</span>
+                  <span className="font-bold text-xl text-primary-600">+●●●● €/an</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Overlay cliquable */}
+            <Link
+              href="/connexion"
+              className="absolute inset-0 bg-white/70 flex flex-col items-center justify-center z-10 cursor-pointer hover:bg-white/60 transition-colors"
+            >
+              <Lock className="w-12 h-12 text-gray-400 mb-4" />
+              <p className="text-charcoal font-semibold mb-2 text-center text-lg">
+                Découvrez comment garder plus d'argent
+              </p>
+              <p className="text-sm text-slate mb-4 text-center max-w-xs">
+                Accédez à votre plan personnalisé pour économiser jusqu'à {resultats.economieEstimee.toLocaleString()}€ par an
+              </p>
+              <span className="bg-primary-500 text-white px-6 py-3 font-semibold hover:bg-primary-600 transition-all flex items-center gap-2">
+                Voir mes optimisations
+                <ArrowRight size={18} />
+              </span>
+            </Link>
+          </div>
+
+          {/* Réassurance */}
+          <p className="text-center text-xs text-slate mt-8">
+            100% légal • Basé sur le code des impôts français • Accompagnement pas à pas
+          </p>
+        </div>
+      </main>
+    );
+  }
+
+  // Pages du formulaire
+  return (
     <main className="min-h-screen bg-offwhite">
-      {/* Header simplifié */}
+      {/* Header */}
       <header className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <Link href="/" className="flex items-center">
@@ -200,525 +346,250 @@ export default function SimulationPage() {
         </div>
       </header>
 
-      <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="max-w-lg mx-auto px-6 py-12">
         {/* Barre de progression */}
-        <div className="mb-12">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-sm text-slate">Étape {step} sur {totalSteps}</span>
-            <span className="text-sm text-slate">{Math.round((step / totalSteps) * 100)}%</span>
+        <div className="mb-8">
+          <div className="flex justify-between text-sm text-slate mb-2">
+            <span>Étape {step} sur {totalSteps}</span>
+            <span>{Math.round((step / totalSteps) * 100)}%</span>
           </div>
-          <div className="h-1 bg-gray-200">
-            <div 
-              className="h-full bg-primary-500 transition-all duration-300"
+          <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary-500 rounded-full transition-all duration-300"
               style={{ width: `${(step / totalSteps) * 100}%` }}
             />
           </div>
         </div>
 
-        {/* Étape 1 : Situation */}
-        {currentContent === 'situation' && (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold text-charcoal mb-2">
-                Votre situation
-              </h1>
-              <p className="text-slate">
-                Commençons par quelques informations de base.
-              </p>
+        {/* Étape 1 : Salaire */}
+        {step === 1 && (
+          <div className="bg-white border border-gray-200 p-6">
+            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+              <Euro className="w-6 h-6 text-primary-500" />
             </div>
+            <h2 className="text-xl font-bold text-charcoal mb-2">
+              Quel est votre salaire net mensuel ?
+            </h2>
+            <p className="text-slate text-sm mb-6">
+              Le montant que vous recevez sur votre compte chaque mois
+            </p>
 
-            <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-2">
-                  Pays
-                </label>
-                <select
-                  value={formData.pays}
-                  onChange={(e) => updateFormData("pays", e.target.value)}
-                  className="w-full border border-gray-300 px-4 py-3 text-charcoal bg-white focus:border-primary-500 focus:outline-none"
-                  title="Sélectionnez votre pays de résidence"
-                >
-                  <option value="">Sélectionnez votre pays</option>
-                  <option value="france">France</option>
-                  <option value="belgique">Belgique</option>
-                  <option value="suisse">Suisse</option>
-                  <option value="luxembourg">Luxembourg</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-2">
-                  Statut professionnel
-                </label>
-                <div className="grid grid-cols-1 gap-3">
-                  {[
-                    { value: "auto-entrepreneur", label: "Auto-entrepreneur / Micro-entreprise" },
-                    { value: "freelance", label: "Freelance / Travailleur indépendant" },
-                    { value: "eurl", label: "EURL / SASU" },
-                    { value: "particulier", label: "Particulier" },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => updateFormData("statut", option.value)}
-                      className={`border p-4 text-left transition-all ${
-                        formData.statut === option.value
-                          ? "border-primary-500 bg-primary-50"
-                          : "border-gray-200 bg-white hover:border-gray-300"
-                      }`}
-                    >
-                      <span className="font-medium text-charcoal">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-2">
-                  Situation familiale
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { value: "celibataire", label: "Célibataire" },
-                    { value: "marie", label: "Marié(e)" },
-                    { value: "pacse", label: "Pacsé(e)" },
-                    { value: "divorce", label: "Divorcé(e)" },
-                  ].map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => updateFormData("situationFamiliale", option.value as SituationFamiliale)}
-                      className={`border p-3 text-center transition-all ${
-                        formData.situationFamiliale === option.value
-                          ? "border-primary-500 bg-primary-50"
-                          : "border-gray-200 bg-white hover:border-gray-300"
-                      }`}
-                    >
-                      <span className="font-medium text-charcoal text-sm">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-2">
-                  Avez-vous des enfants à charge ?
-                </label>
-                <div className="flex gap-4">
-                  <button
-                    onClick={() => {
-                      if (formData.nbEnfants === 0) ajouterEnfant();
-                    }}
-                    className={`flex-1 border p-3 text-center transition-all ${
-                      formData.nbEnfants > 0
-                        ? "border-primary-500 bg-primary-50"
-                        : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
-                  >
-                    <span className="font-medium text-charcoal">Oui</span>
-                  </button>
-                  <button
-                    onClick={() => updateFormData("nbEnfants", 0)}
-                    className={`flex-1 border p-3 text-center transition-all ${
-                      formData.nbEnfants === 0
-                        ? "border-primary-500 bg-primary-50"
-                        : "border-gray-200 bg-white hover:border-gray-300"
-                    }`}
-                  >
-                    <span className="font-medium text-charcoal">Non</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Étape Famille (conditionnelle) */}
-        {currentContent === 'famille' && (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold text-charcoal mb-2">
-                Votre famille
-              </h1>
-              <p className="text-slate">
-                Ces informations nous permettent d'optimiser vos avantages fiscaux.
-              </p>
-            </div>
-
-            {(formData.situationFamiliale === 'marie' || formData.situationFamiliale === 'pacse') && (
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-2">
-                  Revenus annuels de votre conjoint(e)
-                </label>
+            <div className="mb-6">
+              <div className="relative">
                 <input
                   type="number"
-                  value={formData.conjointRevenu}
-                  onChange={(e) => updateFormData("conjointRevenu", parseInt(e.target.value) || 0)}
-                  className="w-full border border-gray-300 px-4 py-3 text-charcoal bg-white focus:border-primary-500 focus:outline-none"
-                  placeholder="0"
+                  value={formData.salaireNet}
+                  onChange={(e) => setFormData({ ...formData, salaireNet: Number(e.target.value) })}
+                  className="w-full text-3xl font-bold text-center py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  min="0"
+                  step="100"
                 />
-                <p className="text-xs text-slate mt-1">Laissez 0 si sans revenus</p>
+                <span className="absolute right-4 top-1/2 -translate-y-1/2 text-2xl text-slate">€</span>
               </div>
-            )}
-
-            <div>
-              <div className="flex justify-between items-center mb-4">
-                <label className="block text-sm font-medium text-charcoal">
-                  Vos enfants à charge ({formData.nbEnfants})
-                </label>
-                <button
-                  onClick={ajouterEnfant}
-                  className="flex items-center gap-1 text-primary-500 hover:text-primary-600 text-sm font-medium"
-                >
-                  <Plus size={16} />
-                  Ajouter
-                </button>
-              </div>
-
-              <div className="space-y-4">
-                {formData.enfants.map((enfant, index) => (
-                  <div key={index} className="bg-white border border-gray-200 p-4">
-                    <div className="flex justify-between items-start mb-4">
-                      <span className="text-sm font-medium text-charcoal">Enfant {index + 1}</span>
-                      <button
-                        onClick={() => supprimerEnfant(index)}
-                        className="text-slate hover:text-danger transition-colors"
-                        aria-label="Supprimer cet enfant"
-                        title="Supprimer"
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-xs text-slate mb-1">Âge</label>
-                        <input
-                          type="number"
-                          value={enfant.age}
-                          onChange={(e) => updateEnfant(index, 'age', parseInt(e.target.value) || 0)}
-                          className="w-full border border-gray-300 px-3 py-2 text-charcoal bg-white focus:border-primary-500 focus:outline-none text-sm"
-                          min="0"
-                          max="25"
-                          title="Âge de l'enfant"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs text-slate mb-1">Scolarité</label>
-                        <select
-                          value={enfant.scolarite || ''}
-                          onChange={(e) => updateEnfant(index, 'scolarite', e.target.value as Scolarite || null)}
-                          className="w-full border border-gray-300 px-3 py-2 text-charcoal bg-white focus:border-primary-500 focus:outline-none text-sm"
-                          title="Niveau de scolarité"
-                        >
-                          <option value="">Non scolarisé</option>
-                          <option value="maternelle">Maternelle</option>
-                          <option value="primaire">Primaire</option>
-                          <option value="college">Collège</option>
-                          <option value="lycee">Lycée</option>
-                          <option value="superieur">Supérieur</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {enfant.age < 6 && (
-                      <div className="mt-4">
-                        <label className="block text-xs text-slate mb-1">
-                          Frais de garde mensuels (crèche, nounou...)
-                        </label>
-                        <input
-                          type="number"
-                          value={enfant.fraisGarde}
-                          onChange={(e) => updateEnfant(index, 'fraisGarde', parseInt(e.target.value) || 0)}
-                          className="w-full border border-gray-300 px-3 py-2 text-charcoal bg-white focus:border-primary-500 focus:outline-none text-sm"
-                          placeholder="0"
-                          title="Frais de garde mensuels"
-                        />
-                        <p className="text-xs text-primary-600 mt-1">
-                          Crédit d'impôt de 50% sur ces frais
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                ))}
-
-                {formData.enfants.length === 0 && (
-                  <div className="text-center py-8 bg-gray-50 border border-gray-200">
-                    <p className="text-slate text-sm mb-4">Aucun enfant ajouté</p>
-                    <button
-                      onClick={ajouterEnfant}
-                      className="text-primary-500 hover:text-primary-600 font-medium text-sm"
-                    >
-                      Ajouter un enfant
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Étape Activité */}
-        {currentContent === 'activite' && (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold text-charcoal mb-2">
-                Votre activité
-              </h1>
-              <p className="text-slate">
-                Quel type d'activité exercez-vous ?
-              </p>
+              <p className="text-center text-sm text-slate mt-2">par mois</p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4">
-              {[
-                { value: "service", label: "Prestation de services", desc: "Conseil, développement, design, coaching..." },
-                { value: "vente", label: "Vente de produits", desc: "E-commerce, artisanat, revente..." },
-                { value: "mixte", label: "Activité mixte", desc: "Services et vente combinés" },
-              ].map((option) => (
+            {/* Raccourcis */}
+            <div className="flex flex-wrap gap-2 justify-center">
+              {[1500, 2000, 2500, 3000, 4000, 5000].map((montant) => (
                 <button
-                  key={option.value}
-                  onClick={() => updateFormData("activite", option.value)}
-                  className={`border p-6 text-left transition-all ${
-                    formData.activite === option.value
-                      ? "border-primary-500 bg-primary-50"
-                      : "border-gray-200 bg-white hover:border-gray-300"
+                  key={montant}
+                  onClick={() => setFormData({ ...formData, salaireNet: montant })}
+                  className={`px-4 py-2 rounded-full text-sm transition-all ${
+                    formData.salaireNet === montant
+                      ? "bg-primary-500 text-white"
+                      : "bg-gray-100 text-slate hover:bg-gray-200"
                   }`}
                 >
-                  <span className="block font-semibold text-charcoal text-lg mb-1">
-                    {option.label}
-                  </span>
-                  <span className="text-slate text-sm">
-                    {option.desc}
-                  </span>
+                  {montant.toLocaleString()}€
                 </button>
               ))}
             </div>
           </div>
         )}
 
-        {/* Étape Revenus */}
-        {currentContent === 'revenus' && (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold text-charcoal mb-2">
-                Vos revenus
-              </h1>
-              <p className="text-slate">
-                Estimez votre chiffre d'affaires et vos dépenses.
-              </p>
+        {/* Étape 2 : Enfants */}
+        {step === 2 && (
+          <div className="bg-white border border-gray-200 p-6">
+            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+              <Users className="w-6 h-6 text-primary-500" />
             </div>
+            <h2 className="text-xl font-bold text-charcoal mb-2">
+              Combien d'enfants avez-vous à charge ?
+            </h2>
+            <p className="text-slate text-sm mb-6">
+              Cela influence directement votre quotient familial
+            </p>
 
-            <div className="space-y-8">
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-4">
-                  Chiffre d'affaires annuel estimé : <span className="text-primary-500 font-bold">{formData.caAnnuel.toLocaleString()}€</span>
-                </label>
-                <input
-                  type="range"
-                  min="10000"
-                  max="200000"
-                  step="1000"
-                  value={formData.caAnnuel}
-                  onChange={(e) => updateFormData("caAnnuel", parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-200 appearance-none cursor-pointer accent-primary-500"
-                  title="Chiffre d'affaires annuel"
-                />
-                <div className="flex justify-between text-xs text-slate mt-2">
-                  <span>10 000€</span>
-                  <span>200 000€</span>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-4">
-                  Dépenses professionnelles mensuelles : <span className="text-primary-500 font-bold">{formData.depensesMensuelles}€</span>                  <Tooltip text="Incluez vos achats de matériel, abonnements logiciels, téléphone, internet pro, formations, etc. Ces dépenses sont déductibles de votre revenu imposable." />                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="3000"
-                  step="50"
-                  value={formData.depensesMensuelles}
-                  onChange={(e) => updateFormData("depensesMensuelles", parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-200 appearance-none cursor-pointer accent-primary-500"
-                  title="Dépenses professionnelles mensuelles"
-                />
-                <div className="flex justify-between text-xs text-slate mt-2">
-                  <span>0€</span>
-                  <span>3 000€</span>
-                </div>
-              </div>
-
-              {/* Frais kilométriques */}
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-4">
-                  Kilomètres professionnels annuels : <span className="text-primary-500 font-bold">{formData.kmAnnuels?.toLocaleString() || 0} km</span>
-                  <Tooltip text="Kilomètres parcourus pour vos déplacements professionnels (clients, réunions, formations). Le barème kilométrique permet de déduire ces frais de vos revenus." />
-                </label>
-                <input
-                  type="range"
-                  min="0"
-                  max="30000"
-                  step="500"
-                  value={formData.kmAnnuels || 0}
-                  onChange={(e) => updateFormData("kmAnnuels", parseInt(e.target.value))}
-                  className="w-full h-2 bg-gray-200 appearance-none cursor-pointer accent-primary-500"
-                  title="Kilomètres professionnels annuels"
-                />
-                <div className="flex justify-between text-xs text-slate mt-2">
-                  <span>0 km</span>
-                  <span>30 000 km</span>
-                </div>
-                {(formData.kmAnnuels || 0) > 0 && (
-                  <div className="mt-4">
-                    <p className="text-sm text-slate mb-2">
-                      Puissance fiscale du véhicule
-                      <Tooltip text="CV = Chevaux fiscaux. C'est la puissance administrative de votre véhicule (indiquée sur la carte grise). Plus elle est élevée, plus le montant déductible par km est important : 3CV ≈ 0,53€/km, 5CV ≈ 0,59€/km, 7CV+ ≈ 0,63€/km." />
-                    </p>
-                    <div className="grid grid-cols-3 gap-3">
-                    {(['3', '5', '7'] as const).map((cv) => (
-                      <button
-                        key={cv}
-                        onClick={() => updateFormData("puissanceFiscale", cv)}
-                        className={`border p-3 text-center transition-all ${
-                          formData.puissanceFiscale === cv
-                            ? "border-primary-500 bg-primary-50"
-                            : "border-gray-200 bg-white hover:border-gray-300"
-                        }`}
-                      >
-                        <span className="block font-semibold text-charcoal">{cv} CV</span>
-                      </button>
-                    ))}
-                    </div>
-                  </div>
-                )}
-              </div>
+            <div className="grid grid-cols-5 gap-3">
+              {[0, 1, 2, 3, 4].map((nb) => (
+                <button
+                  key={nb}
+                  onClick={() => setFormData({ ...formData, nbEnfants: nb })}
+                  className={`py-4 rounded-lg text-xl font-bold transition-all ${
+                    formData.nbEnfants === nb
+                      ? "bg-primary-500 text-white shadow-lg scale-105"
+                      : "bg-gray-100 text-charcoal hover:bg-gray-200"
+                  }`}
+                >
+                  {nb === 4 ? "4+" : nb}
+                </button>
+              ))}
             </div>
           </div>
         )}
 
-        {/* Étape Fiscal (TVA + Résumé) */}
-        {currentContent === 'fiscal' && (
-          <div className="space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold text-charcoal mb-2">
-                Situation fiscale
-              </h1>
-              <p className="text-slate">
-                Dernières informations pour votre diagnostic.
-              </p>
+        {/* Étape 3 : Dons */}
+        {step === 3 && (
+          <div className="bg-white border border-gray-200 p-6">
+            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+              <Heart className="w-6 h-6 text-primary-500" />
+            </div>
+            <h2 className="text-xl font-bold text-charcoal mb-2">
+              Faites-vous des dons à des associations ?
+            </h2>
+            <p className="text-slate text-sm mb-6">
+              Les dons permettent de réduire vos impôts de 66%
+            </p>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <button
+                onClick={() => setFormData({ ...formData, faitDesDons: true })}
+                className={`py-6 rounded-lg text-lg font-semibold transition-all ${
+                  formData.faitDesDons
+                    ? "bg-primary-500 text-white shadow-lg"
+                    : "bg-gray-100 text-charcoal hover:bg-gray-200"
+                }`}
+              >
+                Oui
+              </button>
+              <button
+                onClick={() => setFormData({ ...formData, faitDesDons: false, montantDons: 0 })}
+                className={`py-6 rounded-lg text-lg font-semibold transition-all ${
+                  !formData.faitDesDons
+                    ? "bg-primary-500 text-white shadow-lg"
+                    : "bg-gray-100 text-charcoal hover:bg-gray-200"
+                }`}
+              >
+                Non
+              </button>
             </div>
 
-            {/* TVA */}
-            <div>
-              <h2 className="text-lg font-semibold text-charcoal mb-4">TVA</h2>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  onClick={() => updateFormData("tva", false)}
-                  className={`border p-6 text-center transition-all ${
-                    !formData.tva
-                      ? "border-primary-500 bg-primary-50"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  }`}
-                >
-                  <span className="block font-semibold text-charcoal text-lg">Non</span>
-                  <span className="text-sm text-slate">Franchise en base</span>
-                </button>
-                <button
-                  onClick={() => updateFormData("tva", true)}
-                  className={`border p-6 text-center transition-all ${
-                    formData.tva
-                      ? "border-primary-500 bg-primary-50"
-                      : "border-gray-200 bg-white hover:border-gray-300"
-                  }`}
-                >
-                  <span className="block font-semibold text-charcoal text-lg">Oui</span>
-                  <span className="text-sm text-slate">TVA collectée</span>
-                </button>
+            {formData.faitDesDons && (
+              <div>
+                {/* Label */}
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <span className="text-sm text-slate">Montant de vos dons (environ)</span>
+                  {/* Toggle segmenté style switch */}
+                  <div className="inline-flex bg-gray-200 rounded-lg p-0.5">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, donsParMois: true })}
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                        formData.donsParMois
+                          ? "bg-white text-charcoal shadow-sm"
+                          : "text-slate hover:text-charcoal"
+                      }`}
+                    >
+                      par mois
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, donsParMois: false })}
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+                        !formData.donsParMois
+                          ? "bg-white text-charcoal shadow-sm"
+                          : "text-slate hover:text-charcoal"
+                      }`}
+                    >
+                      par an
+                    </button>
+                  </div>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={formData.montantDons}
+                    onChange={(e) => setFormData({ ...formData, montantDons: Number(e.target.value) })}
+                    className="w-full text-xl font-bold text-center py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    min="0"
+                    step="10"
+                    placeholder="10"
+                  />
+                  <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xl text-slate">€</span>
+                </div>
               </div>
-              <div className="mt-4 bg-gray-50 border border-gray-200 p-4">
-                <p className="text-sm text-slate">
-                  En France, vous êtes exonéré de TVA si votre CA annuel ne dépasse pas 36 800€ (services) ou 91 900€ (vente).
-                </p>
-              </div>
-            </div>
+            )}
+          </div>
+        )}
 
-            {/* Récapitulatif */}
-            <div className="mt-8 bg-primary-50 border border-primary-200 p-6">
-              <h2 className="text-lg font-semibold text-charcoal mb-4">Récapitulatif de votre profil</h2>
-              <div className="space-y-3 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate">Statut</span>
-                  <span className="font-medium text-charcoal capitalize">{formData.statut.replace('-', ' ')}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate">Situation</span>
-                  <span className="font-medium text-charcoal capitalize">{formData.situationFamiliale}</span>
-                </div>
-                {formData.nbEnfants > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-slate">Enfants</span>
-                    <span className="font-medium text-charcoal">{formData.nbEnfants} enfant{formData.nbEnfants > 1 ? 's' : ''}</span>
-                  </div>
-                )}
-                <div className="flex justify-between">
-                  <span className="text-slate">Activité</span>
-                  <span className="font-medium text-charcoal capitalize">{formData.activite}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate">CA estimé</span>
-                  <span className="font-medium text-charcoal">{formData.caAnnuel.toLocaleString()}€/an</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-slate">Dépenses</span>
-                  <span className="font-medium text-charcoal">{formData.depensesMensuelles}€/mois</span>
-                </div>
-                {(formData.kmAnnuels || 0) > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-slate">Frais km</span>
-                    <span className="font-medium text-charcoal">{formData.kmAnnuels?.toLocaleString()} km ({formData.puissanceFiscale} CV)</span>
-                  </div>
-                )}
-              </div>
+        {/* Étape 4 : Propriétaire */}
+        {step === 4 && (
+          <div className="bg-white border border-gray-200 p-6">
+            <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+              <Home className="w-6 h-6 text-primary-500" />
+            </div>
+            <h2 className="text-xl font-bold text-charcoal mb-2">
+              Êtes-vous propriétaire de votre logement ?
+            </h2>
+            <p className="text-slate text-sm mb-6">
+              Certaines déductions sont liées à votre situation immobilière
+            </p>
+
+            <div className="grid grid-cols-2 gap-4">
+              <button
+                onClick={() => setFormData({ ...formData, estProprietaire: true })}
+                className={`py-6 rounded-lg text-lg font-semibold transition-all ${
+                  formData.estProprietaire
+                    ? "bg-primary-500 text-white shadow-lg"
+                    : "bg-gray-100 text-charcoal hover:bg-gray-200"
+                }`}
+              >
+                Oui
+              </button>
+              <button
+                onClick={() => setFormData({ ...formData, estProprietaire: false })}
+                className={`py-6 rounded-lg text-lg font-semibold transition-all ${
+                  !formData.estProprietaire
+                    ? "bg-primary-500 text-white shadow-lg"
+                    : "bg-gray-100 text-charcoal hover:bg-gray-200"
+                }`}
+              >
+                Non
+              </button>
             </div>
           </div>
         )}
 
         {/* Navigation */}
-        <div className="flex justify-between mt-12 pt-8 border-t border-gray-200">
+        <div className="flex justify-between mt-8">
           {step > 1 ? (
             <button
-              onClick={prevStep}
-              className="flex items-center gap-2 text-slate hover:text-charcoal transition-colors"
+              onClick={handleBack}
+              className="px-6 py-3 text-slate hover:text-charcoal transition-colors"
             >
-              <ArrowLeft size={20} />
-              Retour
+              ← Retour
             </button>
           ) : (
             <div />
           )}
 
-          {step < totalSteps ? (
-            <button
-              onClick={nextStep}
-              disabled={!canProceed()}
-              className={`flex items-center gap-2 px-8 py-3 font-medium transition-all ${
-                canProceed()
-                  ? "bg-primary-500 text-white hover:bg-primary-600"
-                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              Continuer
-              <ArrowRight size={20} />
-            </button>
-          ) : (
-            <button
-              onClick={handleSubmit}
-              className="flex items-center gap-2 bg-primary-500 text-white px-8 py-3 font-medium hover:bg-primary-600 transition-all"
-            >
-              Voir mon diagnostic
-              <ArrowRight size={20} />
-            </button>
-          )}
+          <button
+            onClick={handleNext}
+            className="bg-primary-500 text-white px-8 py-3 font-semibold hover:bg-primary-600 transition-all flex items-center gap-2"
+          >
+            {step === totalSteps ? (
+              <>
+                Voir combien je peux gagner
+                <Sparkles size={18} />
+              </>
+            ) : (
+              <>
+                Continuer
+                <ArrowRight size={18} />
+              </>
+            )}
+          </button>
         </div>
       </div>
     </main>

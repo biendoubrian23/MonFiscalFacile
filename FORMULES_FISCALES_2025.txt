@@ -1,0 +1,216 @@
+================================================================================
+FORMULES FISCALES EXACTES - MonFiscalFacile
+Mis à jour le 24 décembre 2025
+Basé sur la législation fiscale française 2025 (revenus 2024)
+VALIDÉ avec ChatGPT - Corrections appliquées
+================================================================================
+
+================================================================================
+ENTRÉE UTILISATEUR : REVENU NET MENSUEL
+================================================================================
+
+L'utilisateur saisit son REVENU NET MENSUEL (ce qu'il reçoit sur son compte).
+
+ATTENTION : Il y a DEUX "Net" en France !
+- Net à payer = ce qui arrive sur le compte bancaire
+- Net imposable = environ 3% plus élevé (CSG/CRDS non déductible)
+
+Étape 1 : Conversion Net à Payer → Net Imposable
+-------------------------------------------------
+FORMULE :
+Net_annuel_estimé = Revenu_mensuel_net × 12 × 1.03
+
+OU plus précisément : multiplier par 12.4 au lieu de 12
+
+Étape 2 : Calculer le REVENU NET IMPOSABLE (après abattement)
+--------------------------------------------------------------
+Par défaut (abattement forfaitaire 10%) :
+  
+  Avec plafonnement 2025 :
+  - Minimum : 506€ (si revenu > 0)
+  - Maximum : 14 422€ d'abattement
+
+  FORMULE EXACTE :
+  abattement = min(max(Net_annuel_estimé × 0.10, 506), 14422)
+  Revenu_net_imposable = Net_annuel_estimé - abattement
+
+Ou si l'utilisateur opte pour les FRAIS RÉELS :
+  Revenu_net_imposable = Net_annuel_estimé - frais_reels_declares
+
+================================================================================
+1. CALCUL DE L'IMPÔT BRUT (Barème progressif 2025)
+================================================================================
+
+BARÈME IR 2025 (revenus 2024) - SOURCE : economie.gouv.fr
+Revalorisé de 2% pour suivre l'inflation
+---------------------------------------------------------
+Tranche 1 : 0€ à 11 520€        → 0%
+Tranche 2 : 11 521€ à 29 373€   → 11%
+Tranche 3 : 29 374€ à 84 000€   → 30%
+Tranche 4 : 84 001€ à 180 648€  → 41%
+Tranche 5 : > 180 648€          → 45%
+
+ÉTAPE A : Calculer le nombre de parts fiscales
+----------------------------------------------
+CÉLIBATAIRE/DIVORCÉ/VEUF :
+- 0 enfant : 1 part
+- 1 enfant : 1.5 parts
+- 2 enfants : 2 parts
+- 3 enfants : 3 parts
+- Formule : 1 + min(nb_enfants, 2) × 0.5 + max(nb_enfants - 2, 0) × 1
+
+COUPLE MARIÉ/PACSÉ :
+- 0 enfant : 2 parts
+- 1 enfant : 2.5 parts
+- 2 enfants : 3 parts
+- 3 enfants : 4 parts
+- Formule : 2 + min(nb_enfants, 2) × 0.5 + max(nb_enfants - 2, 0) × 1
+
+CAS SPÉCIAUX :
+- Parent isolé (case T) : +0.5 part
+- Personne handicapée à charge : +0.5 part par personne
+- Invalide (carte CMI) titulaire : +0.5 part
+
+ÉTAPE B : Calculer le quotient familial
+---------------------------------------
+Quotient = Revenu_net_imposable / Nombre_de_parts
+
+ÉTAPE C : Appliquer le barème progressif sur le quotient
+--------------------------------------------------------
+function calculerImpotParPart(quotient):
+    impot = 0
+    
+    if quotient > 180648:
+        impot += (quotient - 180648) × 0.45
+        quotient = 180648
+    
+    if quotient > 84000:
+        impot += (quotient - 84000) × 0.41
+        quotient = 84000
+    
+    if quotient > 29373:
+        impot += (quotient - 29373) × 0.30
+        quotient = 29373
+    
+    if quotient > 11520:
+        impot += (quotient - 11520) × 0.11
+    
+    return impot
+
+ÉTAPE D : Calculer l'impôt brut
+-------------------------------
+Impot_brut = calculerImpotParPart(Quotient) × Nombre_de_parts
+
+================================================================================
+2. LA DÉCOTE - MÉCANISME CRUCIAL SOUVENT OUBLIÉ !
+================================================================================
+
+La décote est une réduction pour les foyers modestes et moyens.
+Sans elle, le calcul sera FAUX (trop élevé) pour tous ceux qui 
+paient moins de 2 000€ d'impôt !
+
+FORMULE DÉCOTE 2025 :
+---------------------
+
+CÉLIBATAIRE :
+Si impôt_brut < 1 977€ :
+  décote = 939 - (impôt_brut × 45,25%)
+  Si décote < 0, alors décote = 0
+
+COUPLE :
+Si impôt_brut < 3 271€ :
+  décote = 1 555 - (impôt_brut × 45,25%)
+  Si décote < 0, alors décote = 0
+
+function calculerDecote(impot_brut, estCouple):
+    if estCouple:
+        seuil = 3271
+        plafond = 1555
+    else:
+        seuil = 1977
+        plafond = 939
+    
+    if impot_brut >= seuil:
+        return 0
+    
+    decote = plafond - (impot_brut × 0.4525)
+    return max(0, decote)
+
+Impot_apres_decote = Impot_brut - calculerDecote(Impot_brut, estCouple)
+
+================================================================================
+3. PLAFONNEMENT DU QUOTIENT FAMILIAL
+================================================================================
+
+L'avantage fiscal lié aux parts supplémentaires est PLAFONNÉ.
+
+PLAFONDS 2025 :
+- 1 802€ par DEMI-PART supplémentaire (au lieu de 1 791€)
+- 901€ par QUART DE PART supplémentaire
+
+CAS SPÉCIAL - Parent isolé :
+- 4 174€ pour la première demi-part (case T) (au lieu de 4 149€)
+
+================================================================================
+4. CALCUL DU TMI (Taux Marginal d'Imposition)
+================================================================================
+
+Le TMI est le taux applicable à la dernière tranche de revenus.
+C'est L'INFORMATION LA PLUS IMPORTANTE pour l'utilisateur !
+
+Astuce : "Pour chaque 100€ versés sur votre PER, vous économisez [TMI]€"
+
+FORMULE 2025 :
+--------------
+Quotient = Revenu_net_imposable / Nombre_de_parts
+
+if Quotient <= 11520:      TMI = 0%
+else if Quotient <= 29373: TMI = 11%
+else if Quotient <= 84000: TMI = 30%
+else if Quotient <= 180648: TMI = 41%
+else:                       TMI = 45%
+
+================================================================================
+5. VALEURS 2025 CORRIGÉES
+================================================================================
+
+┌─────────────────────────────┬────────────────────┐
+│ Paramètre                   │ Valeur 2025        │
+├─────────────────────────────┼────────────────────┤
+│ Abattement 10% min          │ 506€               │
+│ Abattement 10% max          │ 14 422€            │
+│ Plafond QF (1/2 part)       │ 1 802€             │
+│ Plafond Case T (Parent)     │ 4 174€             │
+│ Plafond Pension Enfant Maj. │ 6 858€             │
+│ Hébergement Ascendant       │ 4 080€             │
+│ PASS                        │ 47 100€            │
+│ PER min                     │ 4 710€             │
+│ PER max                     │ 37 680€            │
+│ Décote célibataire seuil    │ 1 977€             │
+│ Décote célibataire plafond  │ 939€               │
+│ Décote couple seuil         │ 3 271€             │
+│ Décote couple plafond       │ 1 555€             │
+│ Coefficient net imposable   │ 1.03               │
+└─────────────────────────────┴────────────────────┘
+
+================================================================================
+6. MAINTENANCE ANNUELLE REQUISE
+================================================================================
+
+Chaque année (généralement en janvier), mettre à jour :
+□ Tranches du barème IR
+□ Seuils de la décote (célibataire et couple)
+□ Plafond quotient familial
+□ Plafond abattement 10%
+□ Valeur du PASS pour le PER
+□ Plafonds PER : min et max
+□ Taux IR-PME / FIP-FCPI (18% ou 25%)
+□ Barème kilométrique
+□ Forfait hébergement ascendant
+□ Pension alimentaire enfant majeur
+□ Parent isolé plafond
+□ Coefficient conversion net
+
+================================================================================
+FIN DU DOCUMENT - Généré le 24 décembre 2025
+================================================================================

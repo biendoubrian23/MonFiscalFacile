@@ -1,0 +1,271 @@
+================================================================================
+DOCUMENT DE VÉRIFICATION FISCALE - MonFiscalFacile
+Généré le 23 décembre 2025
+À vérifier avec les sources officielles (impots.gouv.fr, service-public.fr, legifrance.gouv.fr)
+================================================================================
+
+================================================================================
+1. BARÈME IMPÔT SUR LE REVENU 2025 (Revenus 2024)
+================================================================================
+
+Tranches d'imposition :
+- 0% : de 0€ à 11 497€
+- 11% : de 11 498€ à 29 315€
+- 30% : de 29 316€ à 83 823€
+- 41% : de 83 824€ à 180 294€
+- 45% : au-delà de 180 294€
+
+Source vérifiée : economie.gouv.fr ✓
+
+================================================================================
+2. QUOTIENT FAMILIAL
+================================================================================
+
+Plafond du quotient familial :
+- 1 791€ par demi-part supplémentaire
+- 896€ par quart de part
+
+Attribution des parts (célibataire) :
+- 0 enfant : 1 part
+- 1 enfant : 1,5 part
+- 2 enfants : 2 parts
+- À partir du 3ème : +1 part par enfant
+
+Attribution des parts (couple marié/pacsé) :
+- 0 enfant : 2 parts
+- 1 enfant : 2,5 parts
+- 2 enfants : 3 parts
+- À partir du 3ème : +1 part par enfant
+
+Source vérifiée : economie.gouv.fr ✓
+
+================================================================================
+3. CATÉGORIE FAMILLE
+================================================================================
+
+3.1 Réductions pour frais de scolarité (Article 199 quater F CGI)
+-----------------------------------------------------------------
+- Collège : 61€ par enfant
+- Lycée : 153€ par enfant
+- Enseignement supérieur : 183€ par enfant
+
+Source vérifiée : Legifrance Article 199 quater F CGI ✓
+
+3.2 Crédit d'impôt pour frais de garde (enfants < 6 ans)
+-----------------------------------------------------------------
+- Taux : 50% des dépenses
+- Plafond de dépenses : 3 500€ par enfant
+- Crédit maximum : 1 750€ par enfant
+
+⚠️ À VÉRIFIER : Montant du plafond pour 2025
+
+3.3 Parent isolé (Case T)
+-----------------------------------------------------------------
+- Avantage : 0,5 part supplémentaire
+- Plafond : 4 149€
+
+⚠️ À VÉRIFIER : Montant du plafond pour 2025
+
+3.4 Pension alimentaire versée
+-----------------------------------------------------------------
+- Type : Déduction du revenu imposable
+- Plafond : 6 674€/an par enfant majeur
+
+⚠️ À VÉRIFIER : Montant du plafond pour 2025
+
+3.5 Personne handicapée à charge (carte CMI)
+-----------------------------------------------------------------
+- Avantage : 0,5 part supplémentaire par personne
+- Plafond : 1 791€ par demi-part
+
+Source : Cohérent avec le plafond QF général ✓
+
+3.6 Frais de dépendance EHPAD
+-----------------------------------------------------------------
+- Taux : 25% des frais de dépendance
+- Plafond de dépenses : 10 000€
+- Réduction maximum : 2 500€
+
+⚠️ À VÉRIFIER : Montant du plafond pour 2025
+
+================================================================================
+4. CATÉGORIE DONS
+================================================================================
+
+4.1 Dons aux organismes d'aide aux personnes en difficulté (75%)
+-----------------------------------------------------------------
+Organismes concernés : Restos du Cœur, Secours Populaire, Croix-Rouge, Banques alimentaires
+- Taux : 75%
+- Plafond de dons : 1 000€
+- Réduction maximum : 750€
+
+⚠️ À VÉRIFIER : Plafond 1 000€ toujours en vigueur en 2025 ?
+
+4.2 Dons aux associations d'intérêt général (66%)
+-----------------------------------------------------------------
+- Taux : 66%
+- Plafond : 20% du revenu imposable
+
+Source probable : Article 200 CGI - À VÉRIFIER
+
+================================================================================
+5. CATÉGORIE EMPLOI À DOMICILE
+================================================================================
+
+5.1 Services à la personne (ménage, cours, aide informatique...)
+-----------------------------------------------------------------
+- Taux : 50% (crédit d'impôt)
+- Plafond global : 12 000€ de dépenses
+- Crédit maximum : 6 000€/an
+
+Plafonds spécifiques :
+- Jardinage : 5 000€/an de dépenses (2 500€ max)
+- Bricolage : 500€/an de dépenses (250€ max)
+- Informatique : 3 000€/an de dépenses (1 500€ max)
+
+5.2 Aide pour proche fragile (personne âgée ou handicapée)
+-----------------------------------------------------------------
+- Taux : 50%
+- Plafond majoré : 20 000€ de dépenses
+- Crédit maximum : 10 000€/an
+
+⚠️ À VÉRIFIER : Tous ces plafonds pour 2025
+
+================================================================================
+6. CATÉGORIE FRAIS PROFESSIONNELS
+================================================================================
+
+6.1 Frais kilométriques (frais réels) - Barème 2025 pour 5CV
+-----------------------------------------------------------------
+- d ≤ 5 000 km : 0,636 × d
+- 5 000 < d ≤ 20 000 km : (0,357 × d) + 1 395
+- d > 20 000 km : 0,427 × d
+
+Plafond abattement forfaitaire 10% : 14 171€
+
+⚠️ À VÉRIFIER : Barème kilométrique 2025 officiel
+
+6.2 Cotisations syndicales
+-----------------------------------------------------------------
+- Taux : 66% (crédit d'impôt)
+- Plafond : 1% du salaire brut imposable
+
+6.3 Frais de repas au travail
+-----------------------------------------------------------------
+- Montant déductible par jour : 5,35€
+- Condition : repas pris hors domicile
+
+⚠️ À VÉRIFIER : Montant 2025 (barème URSSAF)
+
+6.4 Télétravail
+-----------------------------------------------------------------
+- Allocation forfaitaire exonérée : 2,70€/jour
+- Plafond mensuel : 59,40€
+- Plafond annuel : 603,20€ (soit 223 jours max)
+
+⚠️ À VÉRIFIER : Montants URSSAF 2025
+
+6.5 Formation professionnelle
+-----------------------------------------------------------------
+- Type : Déduction du revenu imposable
+- Pas de plafond spécifique mentionné
+
+6.6 Double résidence professionnelle
+-----------------------------------------------------------------
+- Type : Déduction du revenu imposable
+- Déductible : loyer + charges
+- Condition : obligation professionnelle
+
+================================================================================
+7. CATÉGORIE ÉPARGNE RETRAITE
+================================================================================
+
+7.1 Versements PER (Plan Épargne Retraite)
+-----------------------------------------------------------------
+- Type : Déduction du revenu imposable
+- Plafond minimum : 4 637€ (10% du PASS)
+- Plafond maximum : 35 194€ (10% de 8 PASS)
+- Calcul : 10% des revenus professionnels N-1
+
+⚠️ À VÉRIFIER : Valeur du PASS 2025 et plafonds
+
+================================================================================
+8. CATÉGORIE LOGEMENT
+================================================================================
+
+8.1 Borne de recharge électrique
+-----------------------------------------------------------------
+- Taux : 75% des dépenses
+- Plafond : 500€ par borne
+- Maximum : 1 borne par personne du foyer fiscal
+
+⚠️ À VÉRIFIER : Dispositif toujours en vigueur en 2025 ?
+
+================================================================================
+9. CATÉGORIE INVESTISSEMENTS
+================================================================================
+
+9.1 Investissement PME (IR-PME / Madelin)
+-----------------------------------------------------------------
+- Taux : 18%
+- Plafond : 50 000€ (célibataire) / 100 000€ (couple)
+- Réduction max : 9 000€ (célibataire) / 18 000€ (couple)
+
+⚠️ À VÉRIFIER : Taux 2025 (peut être 25% selon les années)
+
+9.2 FIP / FCPI
+-----------------------------------------------------------------
+- Taux : 18%
+- Plafond : 12 000€ (célibataire) / 24 000€ (couple)
+- Réduction max : 2 160€ (célibataire) / 4 320€ (couple)
+
+⚠️ À VÉRIFIER : Taux 2025
+
+================================================================================
+10. CATÉGORIE HÉBERGEMENT
+================================================================================
+
+10.1 Hébergement d'un ascendant
+-----------------------------------------------------------------
+- Type : Déduction du revenu imposable
+- Forfait : 3 968€ par personne hébergée
+- Condition : ascendant sans ressources suffisantes
+
+⚠️ À VÉRIFIER : Montant forfaitaire 2025
+
+================================================================================
+RÉCAPITULATIF DES VÉRIFICATIONS NÉCESSAIRES
+================================================================================
+
+✓ VÉRIFIÉ (sources officielles consultées) :
+- Barème IR 2025 (economie.gouv.fr)
+- Plafond quotient familial : 1 791€/demi-part
+- Frais de scolarité : 61€, 153€, 183€ (Article 199 quater F CGI)
+
+⚠️ À VÉRIFIER IMPÉRATIVEMENT :
+1. Crédit impôt garde enfant : plafond 3 500€ ?
+2. Parent isolé : plafond 4 149€ ?
+3. Pension alimentaire : plafond 6 674€ ?
+4. Dons 75% : plafond 1 000€ toujours valide ?
+5. Frais repas : 5,35€/jour ?
+6. Télétravail : 2,70€/jour, 603,20€/an max ?
+7. Barème kilométrique 2025 : coefficients exacts
+8. PER : plafonds 4 637€ et 35 194€ ?
+9. Borne électrique : 500€ toujours en vigueur ?
+10. IR-PME / FIP-FCPI : taux 18% ou 25% ?
+11. Hébergement ascendant : forfait 3 968€ ?
+12. EHPAD : plafond 10 000€ ?
+13. Emploi à domicile : plafond 12 000€ ?
+
+================================================================================
+SOURCES OFFICIELLES RECOMMANDÉES POUR VÉRIFICATION
+================================================================================
+
+1. impots.gouv.fr - Brochure pratique IR 2025
+2. service-public.fr - Fiches pratiques fiscalité
+3. legifrance.gouv.fr - Code Général des Impôts
+4. bofip.impots.gouv.fr - Bulletin Officiel des Finances Publiques
+5. economie.gouv.fr - Actualités fiscales
+6. urssaf.fr - Barèmes frais professionnels
+
+================================================================================

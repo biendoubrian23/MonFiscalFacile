@@ -6,18 +6,24 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  Calculator,
-  CheckSquare,
-  PlayCircle,
-  HelpCircle,
-  Settings,
+  LayoutDashboard,
+  User,
+  ClipboardList,
+  Bell,
+  BookOpen,
   LogOut,
   Crown,
   ChevronRight,
   Menu,
   X,
   Loader2,
+  Lock,
+  Calculator,
+  History,
+  CreditCard,
+  HelpCircle,
   Sparkles,
+  TrendingUp,
 } from "lucide-react";
 
 interface NavItem {
@@ -29,13 +35,41 @@ interface NavItem {
   badgeColor?: string;
 }
 
-// Sidebar épurée - 5 items max pour les salariés
-const navItems: NavItem[] = [
-  { label: "Simulateur", href: "/mon-espace/salarie", icon: <Calculator size={20} />, badge: "Principal", badgeColor: "bg-primary-500" },
-  { label: "Ma checklist", href: "/mon-espace/checklist", icon: <CheckSquare size={20} /> },
-  { label: "Comment déclarer", href: "/mon-espace/guide-declaration", icon: <PlayCircle size={20} /> },
-  { label: "Aide", href: "/mon-espace/aide", icon: <HelpCircle size={20} /> },
-  { label: "Mon compte", href: "/mon-espace/compte", icon: <Settings size={20} /> },
+interface NavSection {
+  title: string;
+  items: NavItem[];
+}
+
+const navSections: NavSection[] = [
+  {
+    title: "Tableau de bord",
+    items: [
+      { label: "Vue d'ensemble", href: "/mon-espace", icon: <LayoutDashboard size={20} /> },
+      { label: "Mes simulations", href: "/mon-espace/simulations", icon: <History size={20} /> },
+    ],
+  },
+  {
+    title: "Outils",
+    items: [
+      { label: "Calculatrices", href: "/mon-espace/calculatrices", icon: <Calculator size={20} />, badge: "Nouveau", badgeColor: "bg-primary-500" },
+      { label: "Plan d'action", href: "/mon-espace/plan-action", icon: <ClipboardList size={20} />, premium: true },
+      { label: "Rappels fiscaux", href: "/mon-espace/rappels", icon: <Bell size={20} />, premium: true },
+    ],
+  },
+  {
+    title: "Ressources",
+    items: [
+      { label: "Guides pratiques", href: "/mon-espace/guides", icon: <BookOpen size={20} />, premium: true },
+      { label: "Profil fiscal", href: "/mon-espace/profil", icon: <User size={20} /> },
+    ],
+  },
+  {
+    title: "Compte",
+    items: [
+      { label: "Abonnement", href: "/mon-espace/abonnement", icon: <CreditCard size={20} /> },
+      { label: "Aide", href: "/mon-espace/aide", icon: <HelpCircle size={20} /> },
+    ],
+  },
 ];
 
 export default function MonEspaceLayout({
@@ -47,45 +81,21 @@ export default function MonEspaceLayout({
   const pathname = usePathname();
   const { user, profile, isPremium, signOut, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isDevMode, setIsDevMode] = useState(false);
-  const [devUser, setDevUser] = useState<{ name: string; email: string } | null>(null);
 
-  // Vérifier mode dev au chargement
+  // Rediriger vers connexion si non authentifié
   useEffect(() => {
-    const devMode = localStorage.getItem("dev_mode");
-    const devUserData = localStorage.getItem("dev_user");
-    if (devMode === "true" && devUserData) {
-      setIsDevMode(true);
-      setDevUser(JSON.parse(devUserData));
+    if (!loading && !user) {
+      router.push("/connexion");
     }
-  }, []);
-
-  // Rediriger vers connexion si non authentifié ET pas en mode dev
-  useEffect(() => {
-    if (!loading && !user && !isDevMode) {
-      // Attendre un peu pour laisser le temps de vérifier le localStorage
-      const timer = setTimeout(() => {
-        const devMode = localStorage.getItem("dev_mode");
-        if (devMode !== "true") {
-          router.push("/connexion");
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [user, loading, router, isDevMode]);
+  }, [user, loading, router]);
 
   const handleSignOut = async () => {
-    // Nettoyer le mode dev aussi
-    localStorage.removeItem("dev_mode");
-    localStorage.removeItem("dev_user");
-    setIsDevMode(false);
-    setDevUser(null);
     await signOut();
     router.push("/");
   };
 
   // Afficher un loader pendant la vérification
-  if (loading && !isDevMode) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-offwhite flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
@@ -93,8 +103,8 @@ export default function MonEspaceLayout({
     );
   }
 
-  // Ne rien afficher si non authentifié ET pas en mode dev (redirection en cours)
-  if (!user && !isDevMode) {
+  // Ne rien afficher si non authentifié (redirection en cours)
+  if (!user) {
     return null;
   }
 
@@ -110,11 +120,11 @@ export default function MonEspaceLayout({
 
       {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform lg:translate-x-0 ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white border-r border-gray-200 transform transition-transform lg:transform-none ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="h-screen flex flex-col overflow-hidden">
+        <div className="h-full flex flex-col">
           {/* Logo */}
           <div className="p-6 border-b border-gray-200">
             <div className="flex items-center justify-between">
@@ -137,14 +147,14 @@ export default function MonEspaceLayout({
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg">
                 <span className="text-white font-bold text-lg">
-                  {devUser?.name?.charAt(0).toUpperCase() || profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
+                  {profile?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-charcoal truncate">
-                  {devUser?.name || profile?.full_name || "Utilisateur"}
+                  {profile?.full_name || "Utilisateur"}
                 </p>
-                <p className="text-sm text-slate truncate">{devUser?.email || user?.email || "dev@test.com"}</p>
+                <p className="text-sm text-slate truncate">{user.email}</p>
               </div>
             </div>
             
@@ -158,17 +168,17 @@ export default function MonEspaceLayout({
                 </div>
               ) : (
                 <Link
-                  href="/mon-espace/compte"
+                  href="/mon-espace/abonnement"
                   className="block bg-gradient-to-r from-gray-50 to-gray-100 hover:from-primary-50 hover:to-primary-100 border border-gray-200 hover:border-primary-200 transition-all px-4 py-3 rounded-lg group"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center group-hover:bg-primary-100">
-                        <Crown size={16} className="text-slate group-hover:text-primary-500" />
+                        <TrendingUp size={16} className="text-slate group-hover:text-primary-500" />
                       </div>
                       <div>
                         <span className="text-sm font-medium text-charcoal block">Compte Gratuit</span>
-                        <span className="text-xs text-primary-500">Passer Premium →</span>
+                        <span className="text-xs text-primary-500">Débloquer tout →</span>
                       </div>
                     </div>
                     <ChevronRight size={18} className="text-slate group-hover:text-primary-500 transition-colors" />
@@ -178,45 +188,72 @@ export default function MonEspaceLayout({
             </div>
           </div>
 
-          {/* Navigation simple - 5 items */}
+          {/* Navigation par sections */}
           <nav className="flex-1 p-3 overflow-y-auto">
-            <ul className="space-y-1">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href;
+            {navSections.map((section) => (
+              <div key={section.title} className="mb-6">
+                <h3 className="text-xs font-semibold text-slate uppercase tracking-wider px-4 mb-2">
+                  {section.title}
+                </h3>
+                <ul className="space-y-1">
+                  {section.items.map((item) => {
+                    const isActive = pathname === item.href;
+                    const isLocked = item.premium && !isPremium;
 
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      onClick={() => setSidebarOpen(false)}
-                      className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                        isActive
-                          ? "bg-primary-50 text-primary-600 font-medium shadow-sm"
-                          : "text-slate hover:bg-gray-50 hover:text-charcoal"
-                      }`}
-                    >
-                      <span className={isActive ? "text-primary-500" : ""}>{item.icon}</span>
-                      <span className="flex-1 text-sm font-medium">{item.label}</span>
-                      {item.badge && (
-                        <span className={`${item.badgeColor || 'bg-gray-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+                    return (
+                      <li key={item.href}>
+                        {isLocked ? (
+                          <Link
+                            href="/mon-espace/abonnement"
+                            className="flex items-center gap-3 px-4 py-2.5 text-slate hover:bg-gray-50 rounded-lg transition-colors group"
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <span className="text-slate group-hover:text-charcoal">{item.icon}</span>
+                            <span className="flex-1 text-sm">{item.label}</span>
+                            <Lock size={14} className="text-slate" />
+                          </Link>
+                        ) : (
+                          <Link
+                            href={item.href}
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all ${
+                              isActive
+                                ? "bg-primary-50 text-primary-600 font-medium shadow-sm"
+                                : "text-slate hover:bg-gray-50 hover:text-charcoal"
+                            }`}
+                          >
+                            <span className={isActive ? "text-primary-500" : ""}>{item.icon}</span>
+                            <span className="flex-1 text-sm">{item.label}</span>
+                            {item.badge && (
+                              <span className={`${item.badgeColor || 'bg-gray-500'} text-white text-xs px-2 py-0.5 rounded-full`}>
+                                {item.badge}
+                              </span>
+                            )}
+                          </Link>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            ))}
           </nav>
 
-          {/* Déconnexion */}
+          {/* Actions du bas */}
           <div className="p-3 border-t border-gray-200">
+            <Link
+              href="/simulation"
+              className="flex items-center justify-center gap-2 bg-primary-500 hover:bg-primary-600 text-white px-4 py-3 rounded-lg font-semibold transition-all mb-2"
+            >
+              <Calculator size={18} />
+              Nouvelle simulation
+            </Link>
             <button
               onClick={() => {
                 handleSignOut();
                 setSidebarOpen(false);
               }}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-slate hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-slate hover:bg-gray-50 hover:text-charcoal rounded-lg transition-colors"
             >
               <LogOut size={18} />
               <span className="text-sm">Se déconnecter</span>
@@ -226,7 +263,7 @@ export default function MonEspaceLayout({
       </aside>
 
       {/* Contenu principal */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-72">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header mobile amélioré */}
         <header className="lg:hidden bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-30">
           <div className="flex items-center justify-between">
@@ -257,44 +294,43 @@ export default function MonEspaceLayout({
         </main>
 
         {/* Bottom Navigation Mobile */}
-        {/* Navigation mobile - bas de page */}
         <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-30 safe-area-pb">
           <div className="flex items-center justify-around py-2">
             <Link
-              href="/mon-espace/salarie"
+              href="/mon-espace"
               className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-                pathname === "/mon-espace/salarie" ? "text-primary-500" : "text-slate"
+                pathname === "/mon-espace" ? "text-primary-500" : "text-slate"
+              }`}
+            >
+              <LayoutDashboard size={22} />
+              <span className="text-xs font-medium">Accueil</span>
+            </Link>
+            <Link
+              href="/mon-espace/simulations"
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+                pathname === "/mon-espace/simulations" ? "text-primary-500" : "text-slate"
+              }`}
+            >
+              <History size={22} />
+              <span className="text-xs font-medium">Simulations</span>
+            </Link>
+            <Link
+              href="/mon-espace/calculatrices"
+              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+                pathname === "/mon-espace/calculatrices" ? "text-primary-500" : "text-slate"
               }`}
             >
               <Calculator size={22} />
-              <span className="text-xs font-medium">Simulateur</span>
+              <span className="text-xs font-medium">Outils</span>
             </Link>
             <Link
-              href="/mon-espace/checklist"
+              href="/mon-espace/profil"
               className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-                pathname === "/mon-espace/checklist" ? "text-primary-500" : "text-slate"
+                pathname === "/mon-espace/profil" ? "text-primary-500" : "text-slate"
               }`}
             >
-              <CheckSquare size={22} />
-              <span className="text-xs font-medium">Checklist</span>
-            </Link>
-            <Link
-              href="/mon-espace/guide-declaration"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-                pathname === "/mon-espace/guide-declaration" ? "text-primary-500" : "text-slate"
-              }`}
-            >
-              <PlayCircle size={22} />
-              <span className="text-xs font-medium">Guide</span>
-            </Link>
-            <Link
-              href="/mon-espace/compte"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-                pathname === "/mon-espace/compte" ? "text-primary-500" : "text-slate"
-              }`}
-            >
-              <Settings size={22} />
-              <span className="text-xs font-medium">Compte</span>
+              <User size={22} />
+              <span className="text-xs font-medium">Profil</span>
             </Link>
           </div>
         </nav>
