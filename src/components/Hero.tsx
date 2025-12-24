@@ -106,22 +106,13 @@ export default function Hero() {
         {/* Barre de confiance */}
         <div className="mt-8 pt-8 pb-8 lg:pt-12 border-t border-gray-200 relative z-20 bg-gradient-to-b from-primary-50 to-white">
           <p className="text-center text-slate-light text-sm mb-4 lg:mb-6">
-            Déjà utilisé par plus de 843 indépendants
+            Déjà utilisé par 5 689 salariés
           </p>
-          <div className="flex flex-wrap justify-center items-center gap-3 lg:gap-6 opacity-70">
-            <span className="text-charcoal font-bold text-lg lg:text-2xl" style={{ fontFamily: 'Dancing Script, cursive' }}>Freelances</span>
-            <span className="text-gray-300 hidden sm:inline">|</span>
-            <span className="text-charcoal font-bold text-lg lg:text-2xl" style={{ fontFamily: 'Dancing Script, cursive' }}>Auto-entrepreneurs</span>
-            <span className="text-gray-300 hidden sm:inline">|</span>
-            <span className="text-charcoal font-bold text-lg lg:text-2xl" style={{ fontFamily: 'Dancing Script, cursive' }}>Consultants</span>
-          </div>
-          <div className="flex flex-wrap justify-center items-center gap-3 lg:gap-6 opacity-70 mt-2">
-            <span className="text-charcoal font-bold text-lg lg:text-2xl" style={{ fontFamily: 'Dancing Script, cursive' }}>Pères de famille</span>
-            <span className="text-gray-300">|</span>
-            <span className="text-charcoal font-bold text-lg lg:text-2xl" style={{ fontFamily: 'Dancing Script, cursive' }}>Célibataires</span>
-            <span className="text-gray-300 hidden lg:inline">|</span>
-            <span className="text-charcoal font-bold text-lg lg:text-2xl hidden lg:inline" style={{ fontFamily: 'Dancing Script, cursive' }}>Indépendants</span>
-          </div>
+          <p className="text-center text-charcoal font-medium text-base lg:text-lg max-w-2xl mx-auto px-4">
+            <span className="text-primary-600">Saviez-vous que 67% des Français oublient des déductions fiscales ?</span>
+            <br className="hidden sm:block" />
+            <span className="text-slate">Ne laissez plus l'État garder votre argent.</span>
+          </p>
         </div>
       </div>
     </section>

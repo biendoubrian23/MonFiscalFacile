@@ -147,35 +147,6 @@ export default function MonEspaceLayout({
                 <p className="text-sm text-slate truncate">{devUser?.email || user?.email || "dev@test.com"}</p>
               </div>
             </div>
-            
-            {/* Badge abonnement */}
-            <div className="mt-4">
-              {isPremium ? (
-                <div className="bg-gradient-to-r from-amber-400 to-amber-500 text-white px-4 py-2.5 rounded-lg flex items-center gap-2 shadow-md">
-                  <Crown size={18} />
-                  <span className="font-semibold">Premium actif</span>
-                  <Sparkles size={14} className="ml-auto" />
-                </div>
-              ) : (
-                <Link
-                  href="/mon-espace/compte"
-                  className="block bg-gradient-to-r from-gray-50 to-gray-100 hover:from-primary-50 hover:to-primary-100 border border-gray-200 hover:border-primary-200 transition-all px-4 py-3 rounded-lg group"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center group-hover:bg-primary-100">
-                        <Crown size={16} className="text-slate group-hover:text-primary-500" />
-                      </div>
-                      <div>
-                        <span className="text-sm font-medium text-charcoal block">Compte Gratuit</span>
-                        <span className="text-xs text-primary-500">Passer Premium →</span>
-                      </div>
-                    </div>
-                    <ChevronRight size={18} className="text-slate group-hover:text-primary-500 transition-colors" />
-                  </div>
-                </Link>
-              )}
-            </div>
           </div>
 
           {/* Navigation simple - 5 items */}

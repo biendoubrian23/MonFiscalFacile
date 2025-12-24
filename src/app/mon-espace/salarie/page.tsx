@@ -802,22 +802,38 @@ export default function EspaceSalariePage() {
 
   const impotBase = calculerImpotBaseAvecDecote(revenuNetImposable);
 
-  // Calcul du total des économies
-  const calculerEconomies = (): number => {
-    let total = 0;
+  // Calcul du total des économies (Réductions vs Crédits)
+  const calculerEconomies = () => {
+    let reductions = 0;
+    let credits = 0;
+    
     categories.forEach((cat) => {
       cat.reductions.forEach((red) => {
         const valeur = valeurs[red.id] || 0;
         if (valeur > 0) {
-          total += red.calcul(valeur, salaireNet, tmi);
+          const montant = red.calcul(valeur, salaireNet, tmi);
+          if (red.type === "credit") {
+            credits += montant;
+          } else {
+            // Réductions et déductions (gain fiscal)
+            // Les réductions s'imputent sur l'impôt jusqu'à 0€
+            reductions += montant;
+          }
         }
       });
     });
-    return Math.round(total);
+    return { reductions: Math.round(reductions), credits: Math.round(credits) };
   };
 
-  const economiesTotal = calculerEconomies();
-  const impotFinal = Math.max(0, impotBase - economiesTotal);
+  const { reductions, credits } = calculerEconomies();
+  const economiesTotal = reductions + credits;
+  
+  // Logique fiscale précise :
+  // 1. On applique les réductions sur l'impôt brut (plafonné à 0)
+  const impotApresReductions = Math.max(0, impotBase - reductions);
+  
+  // 2. On applique les crédits sur le reste (peut être négatif = remboursement)
+  const impotFinal = impotApresReductions - credits;
 
   // Catégorie sélectionnée
   const catSelectionnee = categories.find((c) => c.id === categorieActive);
@@ -862,153 +878,41 @@ export default function EspaceSalariePage() {
       <div className="bg-white border border-gray-100 p-6 space-y-4">
         <h2 className="font-semibold text-charcoal">Votre salaire</h2>
         
-        {/* Sélecteur mode */}
-        <div>
-          <label className="text-sm text-slate block mb-2">Comment voulez-vous entrer votre salaire ?</label>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <button
-              onClick={() => setModeSalaire("net-mensuel")}
-              className={`p-3 border text-sm transition-colors ${
-                modeSalaire === "net-mensuel"
-                  ? "border-primary-500 bg-primary-50 text-primary-700"
-                  : "border-gray-200 text-slate hover:border-primary-300"
-              }`}
-            >
-              Je connais mon <strong>net par mois</strong>
-            </button>
-            <button
-              onClick={() => setModeSalaire("net-annuel")}
-              className={`p-3 border text-sm transition-colors ${
-                modeSalaire === "net-annuel"
-                  ? "border-primary-500 bg-primary-50 text-primary-700"
-                  : "border-gray-200 text-slate hover:border-primary-300"
-              }`}
-            >
-              Je connais mon <strong>net annuel</strong>
-            </button>
-            <button
-              onClick={() => setModeSalaire("brut-annuel")}
-              className={`p-3 border text-sm transition-colors ${
-                modeSalaire === "brut-annuel"
-                  ? "border-primary-500 bg-primary-50 text-primary-700"
-                  : "border-gray-200 text-slate hover:border-primary-300"
-              }`}
-            >
-              Je connais mon <strong>brut annuel</strong>
-            </button>
+        {/* Champ salaire net mensuel + affichage annuel */}
+        <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-8">
+          <div>
+            <label className="text-sm text-slate block mb-1">
+              Salaire net mensuel (avant impôt)
+              <Tooltip content="Ce que vous recevez chaque mois sur votre compte, avant le prélèvement de l'impôt à la source. Regardez votre fiche de paie ou votre dernier virement.">
+                <HelpCircle size={14} />
+              </Tooltip>
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                value={salaireNetMensuel}
+                onChange={(e) => setSalaireNetMensuel(Number(e.target.value))}
+                className="w-48 p-3 border border-gray-200 focus:border-primary-500 focus:outline-none text-lg font-medium"
+                placeholder="2500"
+              />
+              <span className="text-slate">€/mois</span>
+            </div>
           </div>
-        </div>
-
-        {/* Champs selon le mode */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {modeSalaire === "net-mensuel" && (
-            <div>
-              <label className="text-sm text-slate block mb-1">
-                Salaire net mensuel
-                <Tooltip content="Ce que vous recevez chaque mois sur votre compte, avant impôt. Regardez votre dernier virement de salaire.">
-                  <HelpCircle size={14} />
-                </Tooltip>
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={salaireNetMensuel}
-                  onChange={(e) => setSalaireNetMensuel(Number(e.target.value))}
-                  className="w-full p-3 border border-gray-200 focus:border-primary-500 focus:outline-none text-lg font-medium"
-                  placeholder="2500"
-                />
-                <span className="text-slate">€/mois</span>
-              </div>
-              <p className="text-xs text-slate mt-1">
-                = <strong>{(salaireNetMensuel * 12).toLocaleString()}€</strong> par an
-              </p>
+          
+          {/* Salaire net annuel */}
+          <div>
+            <p className="text-xs text-slate mb-1">Salaire net annuel</p>
+            <div className="px-4 py-3 border border-gray-200 bg-gray-50 rounded">
+              <p className="text-xl font-bold text-charcoal">{(salaireNetMensuel * 12).toLocaleString()}€</p>
             </div>
-          )}
-
-          {modeSalaire === "net-annuel" && (
-            <div>
-              <label className="text-sm text-slate block mb-1">
-                Salaire net annuel
-                <Tooltip content="Votre salaire net imposable annuel. Vous le trouvez sur votre fiche de paie de décembre (cumul annuel).">
-                  <HelpCircle size={14} />
-                </Tooltip>
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={salaireNetAnnuelDirect}
-                  onChange={(e) => setSalaireNetAnnuelDirect(Number(e.target.value))}
-                  className="w-full p-3 border border-gray-200 focus:border-primary-500 focus:outline-none text-lg font-medium"
-                  placeholder="30000"
-                />
-                <span className="text-slate">€/an</span>
-              </div>
-            </div>
-          )}
-
-          {modeSalaire === "brut-annuel" && (
-            <>
-              <div>
-                <label className="text-sm text-slate block mb-1">
-                  Salaire brut annuel
-                  <Tooltip content="Votre salaire brut avant cotisations. C'est souvent celui indiqué sur votre contrat de travail.">
-                    <HelpCircle size={14} />
-                  </Tooltip>
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    value={salaireBrutAnnuel}
-                    onChange={(e) => setSalaireBrutAnnuel(Number(e.target.value))}
-                    className="w-full p-3 border border-gray-200 focus:border-primary-500 focus:outline-none text-lg font-medium"
-                    placeholder="38000"
-                  />
-                  <span className="text-slate">€/an</span>
-                </div>
-              </div>
-              <div>
-                <label className="text-sm text-slate block mb-1">Vous travaillez dans quel secteur ?</label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setSecteur("prive")}
-                    className={`flex-1 p-3 border transition-colors ${
-                      secteur === "prive"
-                        ? "border-primary-500 bg-primary-50 text-primary-700"
-                        : "border-gray-200 text-slate hover:border-primary-300"
-                    }`}
-                  >
-                    Privé
-                  </button>
-                  <button
-                    onClick={() => setSecteur("public")}
-                    className={`flex-1 p-3 border transition-colors ${
-                      secteur === "public"
-                        ? "border-primary-500 bg-primary-50 text-primary-700"
-                        : "border-gray-200 text-slate hover:border-primary-300"
-                    }`}
-                  >
-                    Public
-                  </button>
-                </div>
-                <p className="text-xs text-slate mt-2">
-                  Net estimé : <strong>{salaireNet.toLocaleString()}€</strong> par an
-                  <span className="text-xs ml-1">({secteur === "prive" ? "~23%" : "~17%"} de charges)</span>
-                </p>
-              </div>
-            </>
-          )}
+          </div>
         </div>
       </div>
 
       {/* Bloc récapitulatif sticky */}
       <div className="sticky top-0 z-20 bg-white border border-gray-100">
-        {/* Ligne 1 : 3 colonnes sur mobile et PC */}
-        <div className="grid grid-cols-3 gap-2 md:gap-6 p-4">
-          <div className="text-center">
-            <p className="text-[10px] md:text-xs text-slate mb-1">Salaire net annuel</p>
-            <p className="text-sm md:text-xl font-bold text-charcoal">{salaireNet.toLocaleString()}€</p>
-          </div>
-
+        {/* Ligne 1 : 2 colonnes sur mobile et PC */}
+        <div className="grid grid-cols-2 gap-2 md:gap-6 p-4">
           <div className="text-center">
             <p className="text-[10px] md:text-xs text-slate mb-1">
               <span className="hidden md:inline">Impôt </span>Avant optimisation
@@ -1017,32 +921,39 @@ export default function EspaceSalariePage() {
             <p className="text-[10px] md:text-xs text-slate">TMI : {tmi}%</p>
           </div>
 
-          <div className="text-center bg-green-50 p-1 md:p-2 rounded-lg">
-            <p className="text-[10px] md:text-xs text-green-700 mb-1">
-              <span className="hidden md:inline">Impôt </span>Après optimisation
+          <div className={`text-center p-1 md:p-2 rounded-lg ${impotFinal < 0 ? "bg-primary-50 border border-primary-100" : "bg-green-50"}`}>
+            <p className={`text-[10px] md:text-xs mb-1 ${impotFinal < 0 ? "text-primary-700 font-semibold" : "text-green-700"}`}>
+              {impotFinal < 0 ? "Virement de l'État" : <><span className="hidden md:inline">Impôt </span>Après optimisation</>}
             </p>
-            <p className="text-sm md:text-2xl font-bold text-green-600">{impotFinal.toLocaleString()}€</p>
+            <p className={`text-sm md:text-2xl font-bold ${impotFinal < 0 ? "text-primary-600" : "text-green-600"}`}>
+              {impotFinal < 0 ? "+" : ""}{Math.abs(impotFinal).toLocaleString()}€
+            </p>
             {economiesTotal > 0 && impotBase > 0 && (
-              <p className="text-[10px] md:text-xs text-green-600 hidden md:block">
-                Soit {Math.round((economiesTotal / impotBase) * 100)}% d'économie
+              <p className={`text-[10px] md:text-xs hidden md:block ${impotFinal < 0 ? "text-primary-600" : "text-green-600"}`}>
+                {impotFinal < 0 ? "Vous gagnez de l'argent !" : `Soit ${Math.round((economiesTotal / impotBase) * 100)}% d'économie`}
+              </p>
+            )}
+            {credits > 0 && (
+              <p className="text-[10px] md:text-xs text-slate mt-1 border-t border-slate/10 pt-1">
+                Dont avance janvier : {Math.round(credits * 0.6).toLocaleString()}€
               </p>
             )}
           </div>
         </div>
+      </div>
 
-        {/* Ligne 2 : Vos Gains - Style Gold Premium - PC uniquement */}
-        <div className="hidden lg:flex justify-center pb-4">
-          <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border border-amber-200/60 shadow-sm">
-            <span className="text-xs uppercase tracking-wider text-amber-700/80 font-medium">Vos Gains</span>
-            <span className="text-2xl font-bold bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 bg-clip-text text-transparent">
-              +{economiesTotal.toLocaleString()}€
+      {/* Bouton Vos Gains - Fixed en haut pour PC */}
+      <div className="hidden lg:flex fixed top-4 left-1/2 transform -translate-x-1/2 z-40 ml-36">
+        <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border border-amber-200/60 shadow-lg">
+          <span className="text-xs uppercase tracking-wider text-amber-700/80 font-medium">Vos Gains</span>
+          <span className="text-2xl font-bold bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 bg-clip-text text-transparent">
+            +{economiesTotal.toLocaleString()}€
+          </span>
+          {economiesTotal > 0 && (
+            <span className="text-xs text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded-full">
+              💰 par an
             </span>
-            {economiesTotal > 0 && (
-              <span className="text-xs text-amber-600 bg-amber-100/50 px-2 py-0.5 rounded-full">
-                💰 par an
-              </span>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
