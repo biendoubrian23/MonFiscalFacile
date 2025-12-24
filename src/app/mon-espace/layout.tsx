@@ -7,7 +7,10 @@ import Image from "next/image";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   Calculator,
-  CheckSquare,
+  FileText,
+  Bell,
+  Lightbulb,
+  BarChart3,
   PlayCircle,
   HelpCircle,
   Settings,
@@ -29,10 +32,11 @@ interface NavItem {
   badgeColor?: string;
 }
 
-// Sidebar épurée - 5 items max pour les salariés
+// Sidebar épurée - Navigation pour les salariés
 const navItems: NavItem[] = [
   { label: "Simulateur", href: "/mon-espace/salarie", icon: <Calculator size={20} />, badge: "Principal", badgeColor: "bg-primary-500" },
-  { label: "Ma checklist", href: "/mon-espace/checklist", icon: <CheckSquare size={20} /> },
+  { label: "Mes Rappels", href: "/mon-espace/rappels", icon: <Bell size={20} /> },
+  { label: "Historique", href: "/mon-espace/historique", icon: <BarChart3 size={20} /> },
   { label: "Comment déclarer", href: "/mon-espace/guide-declaration", icon: <PlayCircle size={20} /> },
   { label: "Aide", href: "/mon-espace/aide", icon: <HelpCircle size={20} /> },
   { label: "Mon compte", href: "/mon-espace/compte", icon: <Settings size={20} /> },
@@ -132,24 +136,7 @@ export default function MonEspaceLayout({
             </div>
           </div>
 
-          {/* Profil utilisateur */}
-          <div className="p-4 border-b border-gray-200">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-lg">
-                  {devUser?.name?.charAt(0).toUpperCase() || profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-charcoal truncate">
-                  {devUser?.name || profile?.full_name || "Utilisateur"}
-                </p>
-                <p className="text-sm text-slate truncate">{devUser?.email || user?.email || "dev@test.com"}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Navigation simple - 5 items */}
+          {/* Navigation simple */}
           <nav className="flex-1 p-3 overflow-y-auto">
             <ul className="space-y-1">
               {navItems.map((item) => {
@@ -180,8 +167,21 @@ export default function MonEspaceLayout({
             </ul>
           </nav>
 
-          {/* Déconnexion */}
+          {/* Profil utilisateur + Déconnexion */}
           <div className="p-3 border-t border-gray-200">
+            <div className="flex items-center gap-3 px-2 py-2 mb-2">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center shadow-sm">
+                <span className="text-white font-bold text-sm">
+                  {devUser?.name?.charAt(0).toUpperCase() || profile?.full_name?.charAt(0).toUpperCase() || user?.email?.charAt(0).toUpperCase() || "U"}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-charcoal text-sm truncate">
+                  {devUser?.name || profile?.full_name || "Utilisateur"}
+                </p>
+                <p className="text-xs text-slate truncate">{devUser?.email || user?.email || "dev@test.com"}</p>
+              </div>
+            </div>
             <button
               onClick={() => {
                 handleSignOut();
@@ -233,39 +233,30 @@ export default function MonEspaceLayout({
           <div className="flex items-center justify-around py-2">
             <Link
               href="/mon-espace/salarie"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+              className={`flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-colors ${
                 pathname === "/mon-espace/salarie" ? "text-primary-500" : "text-slate"
               }`}
             >
               <Calculator size={22} />
-              <span className="text-xs font-medium">Simulateur</span>
+              <span className="text-[10px] font-medium">Simulateur</span>
             </Link>
             <Link
-              href="/mon-espace/checklist"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-                pathname === "/mon-espace/checklist" ? "text-primary-500" : "text-slate"
+              href="/mon-espace/rappels"
+              className={`flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-colors ${
+                pathname === "/mon-espace/rappels" ? "text-primary-500" : "text-slate"
               }`}
             >
-              <CheckSquare size={22} />
-              <span className="text-xs font-medium">Checklist</span>
-            </Link>
-            <Link
-              href="/mon-espace/guide-declaration"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
-                pathname === "/mon-espace/guide-declaration" ? "text-primary-500" : "text-slate"
-              }`}
-            >
-              <PlayCircle size={22} />
-              <span className="text-xs font-medium">Guide</span>
+              <Bell size={22} />
+              <span className="text-[10px] font-medium">Rappels</span>
             </Link>
             <Link
               href="/mon-espace/compte"
-              className={`flex flex-col items-center gap-1 px-4 py-2 rounded-lg transition-colors ${
+              className={`flex flex-col items-center gap-1 px-2 py-2 rounded-lg transition-colors ${
                 pathname === "/mon-espace/compte" ? "text-primary-500" : "text-slate"
               }`}
             >
               <Settings size={22} />
-              <span className="text-xs font-medium">Compte</span>
+              <span className="text-[10px] font-medium">Compte</span>
             </Link>
           </div>
         </nav>

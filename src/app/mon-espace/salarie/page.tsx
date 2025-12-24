@@ -751,6 +751,7 @@ export default function EspaceSalariePage() {
   
   const [valeurs, setValeurs] = useState<Record<string, number>>({});
   const [categorieActive, setCategorieActive] = useState<string | null>("famille");
+  const [showBandeau, setShowBandeau] = useState(true);
 
   // Calcul du salaire net annuel selon le mode
   const calculerSalaireNetAnnuel = (): number => {
@@ -861,48 +862,60 @@ export default function EspaceSalariePage() {
         </p>
       </div>
 
-      {/* Bandeau explicatif */}
-      <div className="bg-blue-50 border border-blue-100 p-4 flex items-start gap-3">
-        <Info className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-blue-700">
-          <p className="font-medium mb-1">Comment ça marche ?</p>
-          <p>
-            1. Entrez votre salaire ci-dessous (on calcule le reste)<br />
-            2. Remplissez ce qui vous concerne (par mois, c'est plus simple)<br />
-            3. Voyez votre économie en temps réel en haut de page
-          </p>
-        </div>
+      {/* Bandeau explicatif - déroulant */}
+      <div className="bg-blue-50 border border-blue-100 rounded-lg overflow-hidden">
+        <button
+          onClick={() => setShowBandeau(!showBandeau)}
+          className="w-full p-4 flex items-center gap-3 text-left hover:bg-blue-100/50 transition-colors"
+        >
+          <Info className="w-5 h-5 text-blue-500 flex-shrink-0" />
+          <p className="font-medium text-blue-700 flex-1">Comment ça marche ?</p>
+          {showBandeau ? (
+            <ChevronUp size={20} className="text-blue-500" />
+          ) : (
+            <ChevronDown size={20} className="text-blue-500" />
+          )}
+        </button>
+        {showBandeau && (
+          <div className="px-4 pb-4 pl-12 text-sm text-blue-700">
+            <p>
+              1. Entrez votre salaire ci-dessous (on calcule le reste)<br />
+              2. Remplissez ce qui vous concerne (par mois, c'est plus simple)<br />
+              3. Voyez votre économie en temps réel en haut de page
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Bloc saisie salaire */}
       <div className="bg-white border border-gray-100 p-6 space-y-4">
-        <h2 className="font-semibold text-charcoal">Votre salaire</h2>
+        <h2 className="font-semibold text-charcoal text-center">Votre salaire</h2>
         
         {/* Champ salaire net mensuel + affichage annuel */}
-        <div className="flex flex-col md:flex-row md:items-end gap-4 md:gap-8">
-          <div>
+        <div className="flex flex-col md:flex-row md:items-end md:justify-center gap-4 md:gap-8">
+          <div className="w-full md:w-auto">
             <label className="text-sm text-slate block mb-1">
               Salaire net mensuel (avant impôt)
               <Tooltip content="Ce que vous recevez chaque mois sur votre compte, avant le prélèvement de l'impôt à la source. Regardez votre fiche de paie ou votre dernier virement.">
                 <HelpCircle size={14} />
               </Tooltip>
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center">
               <input
                 type="number"
                 value={salaireNetMensuel}
                 onChange={(e) => setSalaireNetMensuel(Number(e.target.value))}
-                className="w-48 p-3 border border-gray-200 focus:border-primary-500 focus:outline-none text-lg font-medium"
+                className="w-[90%] md:w-48 md:flex-none p-3 border border-gray-200 focus:border-primary-500 focus:outline-none text-lg font-medium"
                 placeholder="2500"
               />
-              <span className="text-slate">€/mois</span>
+              <span className="text-slate ml-2 flex-shrink-0">€/mois</span>
             </div>
           </div>
           
           {/* Salaire net annuel */}
-          <div>
+          <div className="w-full md:w-auto">
             <p className="text-xs text-slate mb-1">Salaire net annuel</p>
-            <div className="px-4 py-3 border border-gray-200 bg-gray-50 rounded">
+            <div className="px-6 py-3 border border-gray-200 bg-gray-50 rounded md:min-w-[180px]">
               <p className="text-xl font-bold text-charcoal">{(salaireNetMensuel * 12).toLocaleString()}€</p>
             </div>
           </div>
@@ -957,8 +970,19 @@ export default function EspaceSalariePage() {
         </div>
       </div>
 
+      {/* Titre accrocheur */}
+      <div className="text-center py-6">
+        <h2 className="text-xl lg:text-2xl font-bold text-charcoal mb-2">
+          🎯 Cochez ce qui vous concerne, on s'occupe du reste
+        </h2>
+        <p className="text-slate text-sm lg:text-base max-w-xl mx-auto">
+          Chaque case cochée = des euros en moins sur votre déclaration
+        </p>
+      </div>
+
       {/* Layout 2 colonnes - Catégories et Détails */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Version PC : 2 colonnes */}
+      <div className="hidden lg:grid lg:grid-cols-12 gap-6">
         
         {/* Colonne gauche - Liste des catégories */}
         <div className="lg:col-span-4 space-y-2">
@@ -1176,6 +1200,165 @@ export default function EspaceSalariePage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Version Mobile : Accordéon */}
+      <div className="lg:hidden space-y-3">
+        <h3 className="text-sm font-medium text-slate mb-3">Catégories</h3>
+        {categories.map((cat) => {
+          const eco = getEcoCategorie(cat);
+          const isActive = categorieActive === cat.id;
+          const IconComponent = cat.icon;
+
+          return (
+            <div key={cat.id} className="bg-white border border-gray-100 rounded-lg overflow-hidden">
+              {/* Header de la catégorie - cliquable */}
+              <button
+                onClick={() => setCategorieActive(isActive ? null : cat.id)}
+                className={`w-full flex items-center gap-3 p-4 text-left transition-all ${
+                  isActive ? "bg-primary-50" : "hover:bg-gray-50"
+                }`}
+              >
+                <IconComponent 
+                  size={20} 
+                  className={isActive ? "text-primary-600" : "text-slate"}
+                  strokeWidth={1.5}
+                />
+                
+                <div className="flex-1 min-w-0">
+                  <p className={`font-medium ${isActive ? "text-primary-700" : "text-charcoal"}`}>
+                    {cat.nom}
+                  </p>
+                  <p className="text-xs text-slate">
+                    {cat.description}
+                  </p>
+                </div>
+
+                {eco > 0 && (
+                  <span className="text-xs font-semibold text-primary-600 bg-primary-100 px-2 py-1 rounded">
+                    -{eco}€
+                  </span>
+                )}
+
+                {isActive ? (
+                  <ChevronUp size={20} className="text-primary-500" />
+                ) : (
+                  <ChevronDown size={20} className="text-slate" />
+                )}
+              </button>
+
+              {/* Contenu dépliable */}
+              {isActive && (
+                <div className="border-t border-gray-100 divide-y divide-gray-100">
+                  {cat.reductions.map((red) => {
+                    const valeur = valeurs[red.id] || 0;
+                    const economie = valeur > 0 ? red.calcul(valeur, salaireNet, tmi) : 0;
+                    const isChecked = valeur > 0;
+
+                    return (
+                      <div
+                        key={red.id}
+                        className={`p-4 transition-all ${isChecked ? "bg-primary-50/50" : ""}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          {/* Checkbox visuelle */}
+                          <div 
+                            className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                              isChecked 
+                                ? "bg-primary-500 border-primary-500" 
+                                : "border-gray-300"
+                            }`}
+                          >
+                            {isChecked && <Check size={14} className="text-white" />}
+                          </div>
+
+                          {/* Contenu */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1 flex-wrap">
+                              <p className={`font-medium ${isChecked ? "text-primary-700" : "text-charcoal"}`}>
+                                {red.nom}
+                              </p>
+                              <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                red.type === "credit"
+                                  ? "bg-green-100 text-green-700"
+                                  : red.type === "deduction"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-amber-100 text-amber-700"
+                              }`}>
+                                {red.type === "credit" ? "Crédit" : red.type === "deduction" ? "Déduction" : "Réduction"}
+                              </span>
+                            </div>
+                            
+                            <p className="text-sm text-slate mb-2">{red.description}</p>
+                            
+                            <p className="text-xs text-slate mb-3">
+                              {red.tauxOuMontant}
+                            </p>
+
+                            {/* Input selon le type */}
+                            <div className="flex items-center gap-3 flex-wrap">
+                              {red.inputType === "boolean" ? (
+                                <button
+                                  onClick={() => updateValeur(red.id, valeur === 1 ? 0 : 1)}
+                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                    valeur === 1
+                                      ? "bg-primary-500 text-white"
+                                      : "bg-gray-100 text-slate hover:bg-gray-200"
+                                  }`}
+                                >
+                                  {valeur === 1 ? "✓ Oui" : "Non"}
+                                </button>
+                              ) : red.inputType === "nombre" ? (
+                                <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+                                    <button
+                                      onClick={() => updateValeur(red.id, Math.max(0, valeur - 1))}
+                                      className="w-8 h-8 rounded flex items-center justify-center hover:bg-gray-200 font-bold text-lg"
+                                    >
+                                      −
+                                    </button>
+                                    <span className="w-8 text-center font-semibold">{valeur}</span>
+                                    <button
+                                      onClick={() => updateValeur(red.id, Math.min(red.inputMax || 10, valeur + 1))}
+                                      className="w-8 h-8 rounded flex items-center justify-center hover:bg-gray-200 font-bold text-lg"
+                                    >
+                                      +
+                                    </button>
+                                  </div>
+                                  {red.inputSuffix && (
+                                    <span className="text-slate text-sm">{red.inputSuffix}</span>
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    value={valeur || ""}
+                                    onChange={(e) => updateValeur(red.id, Number(e.target.value))}
+                                    placeholder="0"
+                                    className="w-20 p-2 border border-gray-200 rounded-lg focus:border-primary-500 focus:outline-none text-right"
+                                  />
+                                  <span className="text-slate text-sm">{red.inputSuffix || "€"}</span>
+                                </div>
+                              )}
+
+                              {/* Économie */}
+                              {economie > 0 && (
+                                <span className="text-primary-600 font-bold bg-primary-100 px-2 py-1 rounded-lg text-sm">
+                                  -{Math.round(economie)}€
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
 
       {/* Rappel des erreurs fréquentes */}

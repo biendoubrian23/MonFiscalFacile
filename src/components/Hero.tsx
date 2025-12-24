@@ -109,7 +109,7 @@ export default function Hero() {
             Déjà utilisé par 5 689 salariés
           </p>
           <p className="text-center text-charcoal font-medium text-base lg:text-lg max-w-2xl mx-auto px-4">
-            <span className="text-primary-600">Saviez-vous que 67% des Français oublient des déductions fiscales ?</span>
+            <span className="text-primary-600">Saviez-vous que 79% des Français oublient des déductions fiscales ?</span>
             <br className="hidden sm:block" />
             <span className="text-slate">Ne laissez plus l'État garder votre argent.</span>
           </p>
