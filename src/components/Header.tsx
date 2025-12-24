@@ -27,10 +27,16 @@ export default function Header() {
           {/* Navigation Desktop */}
           <nav className="hidden lg:flex items-center gap-8">
             <Link 
-              href="#comment-ca-marche" 
+              href="/#comment-ca-marche" 
               className="text-slate hover:text-charcoal transition-colors"
             >
               Comment ça marche
+            </Link>
+            <Link 
+              href="/articles" 
+              className="text-slate hover:text-charcoal transition-colors"
+            >
+              Articles
             </Link>
             <Link 
               href="/pricing" 
@@ -68,11 +74,18 @@ export default function Header() {
         <div className="lg:hidden bg-white border-t border-gray-200">
           <nav className="flex flex-col px-6 py-4 gap-4">
             <Link 
-              href="#comment-ca-marche" 
+              href="/#comment-ca-marche" 
               className="text-slate hover:text-charcoal transition-colors py-2"
               onClick={() => setIsMenuOpen(false)}
             >
               Comment ça marche
+            </Link>
+            <Link 
+              href="/articles" 
+              className="text-slate hover:text-charcoal transition-colors py-2"
+              onClick={() => setIsMenuOpen(false)}
+            >
+              Articles
             </Link>
             <Link 
               href="/pricing" 

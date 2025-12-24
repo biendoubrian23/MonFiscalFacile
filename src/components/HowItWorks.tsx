@@ -20,7 +20,7 @@ export default function HowItWorks() {
   ];
 
   return (
-    <section id="comment-ca-marche" className="pt-8 md:pt-12 lg:-mt-32 pb-8 px-6 bg-white">
+    <section className="pt-8 md:pt-12 lg:-mt-32 pb-8 px-6 bg-white">
       <div className="max-w-7xl mx-auto">
         {/* Section Problème */}
         <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-8 items-center mb-8 lg:mb-16">
@@ -63,42 +63,51 @@ export default function HowItWorks() {
         </div>
 
         {/* Titre section étapes */}
-        <div className="text-center mb-16">
+        <div id="comment-ca-marche" className="text-center mb-12 scroll-mt-24">
+          <p className="text-sm font-semibold text-primary-500 uppercase tracking-widest mb-3">
+            Comment ça marche
+          </p>
           <h2 className="text-3xl md:text-4xl font-bold text-charcoal mb-4">
-            3 étapes. 3 minutes. Des économies.
+            3 minutes pour reprendre le contrôle
           </h2>
-          <p className="text-lg text-slate max-w-2xl mx-auto">
-            Pas besoin d'être expert fiscal. Notre outil fait le travail pour vous.
+          <p className="text-lg text-slate max-w-xl mx-auto">
+            Zéro jargon. Zéro stress. Juste des résultats.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid md:grid-cols-3 gap-0 border border-slate/20">
           {steps.map((step, index) => (
             <div 
               key={step.number}
-              className="relative bg-offwhite border border-gray-200 p-8 hover:shadow-md transition-shadow"
+              className={`relative bg-white p-8 md:p-10 ${
+                index < steps.length - 1 ? "md:border-r border-b md:border-b-0 border-slate/20" : ""
+              }`}
             >
               {/* Numéro */}
-              <span className="text-6xl font-bold text-primary-100 absolute top-4 right-4">
-                {step.number}
-              </span>
+              <div className="flex items-center gap-4 mb-5">
+                <span className="text-4xl font-black text-primary-500">
+                  {step.number}
+                </span>
+                <div className="h-px flex-1 bg-gradient-to-r from-primary-200 to-transparent" />
+              </div>
               
               {/* Contenu */}
-              <div className="relative z-10">
-                <h3 className="text-xl font-semibold text-charcoal mb-3">
-                  {step.title}
-                </h3>
-                <p className="text-slate">
-                  {step.description}
-                </p>
-              </div>
-
-              {/* Ligne de connexion */}
-              {index < steps.length - 1 && (
-                <div className="hidden md:block absolute top-1/2 -right-4 w-8 h-0.5 bg-primary-200" />
-              )}
+              <h3 className="text-lg font-bold text-charcoal mb-2">
+                {step.title}
+              </h3>
+              <p className="text-slate text-sm leading-relaxed">
+                {step.description}
+              </p>
             </div>
           ))}
+        </div>
+
+        {/* Chiffre clé */}
+        <div className="mt-12 text-center">
+          <div className="inline-flex items-center gap-3 px-6 py-3 bg-charcoal text-white">
+            <span className="text-2xl font-bold text-primary-400">843€</span>
+            <span className="text-sm">économisés en moyenne par nos utilisateurs</span>
+          </div>
         </div>
       </div>
     </section>

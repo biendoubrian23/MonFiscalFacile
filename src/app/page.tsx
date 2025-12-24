@@ -3,7 +3,6 @@ import Hero from "@/components/Hero";
 import HowItWorks from "@/components/HowItWorks";
 import Benefits from "@/components/Benefits";
 import Testimonials from "@/components/Testimonials";
-import BeforeAfter from "@/components/BeforeAfter";
 import CTASection from "@/components/CTASection";
 import Footer from "@/components/Footer";
 
@@ -14,7 +13,6 @@ export default function Home() {
       <Hero />
       <HowItWorks />
       <Benefits />
-      <BeforeAfter />
       <Testimonials />
       <CTASection />
       <Footer />

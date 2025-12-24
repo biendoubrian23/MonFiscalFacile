@@ -1,56 +1,43 @@
+"use client";
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import Link from "next/link";
 import { Check, X, Star, Shield, Zap, Clock } from "lucide-react";
+import { useState } from "react";
 
 export default function PricingPage() {
-  const plans = [
-    {
-      name: "Gratuit",
-      price: "0€",
-      period: "pour toujours",
-      description: "Pour découvrir votre potentiel d'économies",
-      features: [
-        "Simulation fiscale complète",
-        "Estimation de vos impôts actuels",
-        "Aperçu des économies possibles",
-        "Comparatif avant/après",
-      ],
-      cta: "Commencer gratuitement",
-      href: "/simulation",
-      highlighted: false
-    },
-    {
-      name: "Premium",
-      price: "12€",
-      period: "par mois",
-      description: "Pour passer à l'action et économiser vraiment",
-      features: [
-        "Tout du plan Gratuit",
-        "Simulations illimitées",
-        "Plan d'action personnalisé",
-        "Guides étape par étape",
-        "Rappels fiscaux automatiques",
-        "Historique des simulations",
-        "Support prioritaire",
-      ],
-      cta: "Débloquer Premium",
-      href: "/connexion",
-      highlighted: true
-    }
+  const [isAnnual, setIsAnnual] = useState(false);
+
+  const gratuitFeatures = [
+    "Simulation limitée",
+    "Estimation approximative",
+    "Conseils généraux sur quoi déclarer",
+    "Accès limité aux guides",
+  ];
+
+  const premiumFeatures = [
+    "Simulations illimitées",
+    "Analyse complète de votre situation",
+    "Checklist personnalisée case par case",
+    "Guides détaillés pas à pas",
+    "Calendrier fiscal + rappels",
+    "Historique et comparaison N-1",
+    "Support prioritaire par email",
+    "Mises à jour barème en temps réel",
   ];
 
   // Tableau comparatif détaillé
   const comparaison = [
-    { feature: "Simulation fiscale", gratuit: true, premium: true },
-    { feature: "Estimation des impôts", gratuit: true, premium: true },
-    { feature: "Aperçu des économies", gratuit: true, premium: true },
-    { feature: "Simulations illimitées", gratuit: false, premium: true },
-    { feature: "Plan d'action complet", gratuit: false, premium: true },
-    { feature: "Guides pas à pas", gratuit: false, premium: true },
-    { feature: "Rappels échéances fiscales", gratuit: false, premium: true },
-    { feature: "Historique simulations", gratuit: false, premium: true },
-    { feature: "Support prioritaire", gratuit: false, premium: true },
+    { feature: "Simulation fiscale", gratuit: "Limitée", premium: "Illimitées" },
+    { feature: "Calcul de l'impôt", gratuit: "Approximatif", premium: "Précis au centime" },
+    { feature: "Réductions identifiées", gratuit: "Aperçu", premium: "47+ analysées" },
+    { feature: "Checklist case par case", gratuit: false, premium: true },
+    { feature: "Infos-bulles explicatives", gratuit: false, premium: true },
+    { feature: "Calendrier fiscal + rappels", gratuit: false, premium: true },
+    { feature: "Historique des simulations", gratuit: false, premium: true },
+    { feature: "Comparaison année N-1", gratuit: false, premium: true },
+    { feature: "Barème 2025 à jour", gratuit: true, premium: true },
   ];
 
   // Témoignages
@@ -87,108 +74,122 @@ export default function PricingPage() {
               Investissement rentable
             </span>
             <h1 className="text-4xl md:text-5xl font-bold text-charcoal mb-4">
-              12€/mois pour économiser des milliers
+              Un petit prix pour de grandes économies
             </h1>
             <p className="text-xl text-slate max-w-2xl mx-auto">
-              Nos utilisateurs économisent en moyenne 1 700€/an. ROI moyen : x12.
+              Nos utilisateurs économisent en moyenne 1 700€/an. ROI moyen : x100.
             </p>
+
+            {/* Toggle 3 mois / Annuel */}
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <span className={`font-medium ${!isAnnual ? "text-charcoal" : "text-slate"}`}>
+                3 mois
+              </span>
+              <button
+                onClick={() => setIsAnnual(!isAnnual)}
+                className={`relative w-14 h-8 rounded-full transition-colors duration-300 ${
+                  isAnnual ? "bg-primary-500" : "bg-gray-300"
+                }`}
+              >
+                <span
+                  className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full shadow-md transition-transform duration-300 ${
+                    isAnnual ? "translate-x-6" : "translate-x-0"
+                  }`}
+                />
+              </button>
+              <span className={`font-medium ${isAnnual ? "text-charcoal" : "text-slate"}`}>
+                Annuel
+                <span className="ml-2 text-xs bg-primary-100 text-primary-600 px-2 py-0.5 rounded-full">
+                  -25%
+                </span>
+              </span>
+            </div>
           </div>
 
           {/* Cartes de prix */}
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-20">
-            {plans.map((plan) => (
-              <div 
-                key={plan.name}
-                className={`bg-white border p-8 relative ${
-                  plan.highlighted 
-                    ? "border-primary-500 ring-2 ring-primary-500" 
-                    : "border-gray-200"
-                }`}
-              >
-                {plan.highlighted && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-sm font-medium px-4 py-1">
-                    Le plus populaire
-                  </div>
-                )}
-                
-                <h2 className="text-2xl font-bold text-charcoal mb-2">
-                  {plan.name}
-                </h2>
-                <p className="text-slate mb-6">
-                  {plan.description}
-                </p>
-                
-                <div className="mb-8">
-                  <span className="text-5xl font-bold text-charcoal">
-                    {plan.price}
-                  </span>
-                  <span className="text-slate ml-2">
-                    {plan.period}
-                  </span>
-                </div>
-
-                <ul className="space-y-4 mb-8">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-primary-500 mt-0.5 flex-shrink-0" strokeWidth={2} />
-                      <span className="text-charcoal">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  href={plan.href}
-                  className={`block text-center px-8 py-4 font-semibold transition-all duration-200 ${
-                    plan.highlighted
-                      ? "bg-primary-500 text-white hover:bg-primary-600"
-                      : "border-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-white"
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-
-          {/* Garanties */}
-          <div className="bg-white border border-gray-200 p-8 mb-20">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl font-bold text-charcoal mb-2">
-                Essayez sans risque
-              </h3>
-              <p className="text-slate">
-                Nous croyons tellement en notre outil que nous vous offrons ces garanties
+            {/* Carte Gratuit */}
+            <div className="bg-white border border-gray-200 p-8 relative flex flex-col">
+              <h2 className="text-2xl font-bold text-charcoal mb-2">
+                Gratuit
+              </h2>
+              <p className="text-slate mb-6">
+                Pour avoir un premier aperçu
               </p>
+              
+              <div className="mb-8">
+                <span className="text-5xl font-bold text-charcoal">
+                  0€
+                </span>
+                <span className="text-slate ml-2">
+                  pour toujours
+                </span>
+              </div>
+
+              <ul className="space-y-4 mb-8 flex-1">
+                {gratuitFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-primary-500 mt-0.5 flex-shrink-0" strokeWidth={2} />
+                    <span className="text-charcoal">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                href="/simulation"
+                className="block text-center px-8 py-4 font-semibold transition-all duration-200 mt-auto border-2 border-charcoal text-charcoal hover:bg-charcoal hover:text-white"
+              >
+                Essayer gratuitement
+              </Link>
             </div>
-            
-            <div className="grid md:grid-cols-3 gap-8">
-              <div className="text-center">
-                <div className="w-14 h-14 bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                  <Shield className="w-7 h-7 text-primary-500" />
-                </div>
-                <h4 className="font-semibold text-charcoal mb-2">Satisfait ou remboursé</h4>
-                <p className="text-sm text-slate">
-                  14 jours pour tester. Si vous n'êtes pas convaincu, on vous rembourse sans question.
-                </p>
+
+            {/* Carte Premium */}
+            <div className="bg-white border-primary-500 ring-2 ring-primary-500 border p-8 relative flex flex-col">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary-500 text-white text-sm font-medium px-4 py-1">
+                Le plus populaire
               </div>
-              <div className="text-center">
-                <div className="w-14 h-14 bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                  <Zap className="w-7 h-7 text-primary-500" />
-                </div>
-                <h4 className="font-semibold text-charcoal mb-2">Annulation immédiate</h4>
-                <p className="text-sm text-slate">
-                  Pas d'engagement. Annulez en 1 clic depuis votre espace, à tout moment.
-                </p>
+              
+              <h2 className="text-2xl font-bold text-charcoal mb-2">
+                Premium
+              </h2>
+              <p className="text-slate mb-6">
+                Pour vraiment économiser sur vos impôts
+              </p>
+              
+              <div className="mb-8">
+                <span className="text-5xl font-bold text-charcoal">
+                  {isAnnual ? "19,99€" : "14,99€"}
+                </span>
+                <span className="text-slate ml-2">
+                  {isAnnual ? "pour 1 an" : "pour 3 mois"}
+                </span>
+                {isAnnual && (
+                  <span className="block text-sm text-primary-600 mt-1">
+                    soit 1,67€/mois
+                  </span>
+                )}
+                {!isAnnual && (
+                  <span className="block text-sm text-primary-600 mt-1">
+                    soit 5€/mois
+                  </span>
+                )}
               </div>
-              <div className="text-center">
-                <div className="w-14 h-14 bg-primary-50 flex items-center justify-center mx-auto mb-4">
-                  <Clock className="w-7 h-7 text-primary-500" />
-                </div>
-                <h4 className="font-semibold text-charcoal mb-2">Support réactif</h4>
-                <p className="text-sm text-slate">
-                  Une question ? Notre équipe répond sous 24h, week-end compris.
-                </p>
-              </div>
+
+              <ul className="space-y-4 mb-8 flex-1">
+                {premiumFeatures.map((feature) => (
+                  <li key={feature} className="flex items-start gap-3">
+                    <Check className="w-5 h-5 text-primary-500 mt-0.5 flex-shrink-0" strokeWidth={2} />
+                    <span className="text-charcoal">{feature}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <Link
+                href="/connexion"
+                className="block text-center px-8 py-4 font-semibold transition-all duration-200 mt-auto bg-primary-500 text-white hover:bg-primary-600"
+              >
+                Débloquer Premium
+              </Link>
             </div>
           </div>
 
@@ -212,14 +213,20 @@ export default function PricingPage() {
                     <tr key={ligne.feature} className={idx % 2 === 0 ? "bg-gray-50" : ""}>
                       <td className="py-4 px-6 text-charcoal">{ligne.feature}</td>
                       <td className="text-center py-4 px-6">
-                        {ligne.gratuit ? (
+                        {typeof ligne.gratuit === "string" ? (
+                          <span className="text-slate text-sm">{ligne.gratuit}</span>
+                        ) : ligne.gratuit ? (
                           <Check className="w-5 h-5 text-primary-500 mx-auto" />
                         ) : (
                           <X className="w-5 h-5 text-gray-300 mx-auto" />
                         )}
                       </td>
                       <td className="text-center py-4 px-6 bg-primary-50/50">
-                        <Check className="w-5 h-5 text-primary-500 mx-auto" />
+                        {typeof ligne.premium === "string" ? (
+                          <span className="text-primary-600 font-medium text-sm">{ligne.premium}</span>
+                        ) : (
+                          <Check className="w-5 h-5 text-primary-500 mx-auto" />
+                        )}
                       </td>
                     </tr>
                   ))}
